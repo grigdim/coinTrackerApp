@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		24AF6F5C2EEB232200473F64 /* ChatPrototype.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChatPrototype.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		24AF6F5C2EEB232200473F64 /* CoinTrackerApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoinTrackerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		24AF6F5E2EEB232200473F64 /* ChatPrototype */ = {
+		24AF6F5E2EEB232200473F64 /* CoinTrackerApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ChatPrototype;
+			path = CoinTrackerApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		24AF6F532EEB232200473F64 = {
 			isa = PBXGroup;
 			children = (
-				24AF6F5E2EEB232200473F64 /* ChatPrototype */,
+				24AF6F5E2EEB232200473F64 /* CoinTrackerApp */,
 				24AF6F5D2EEB232200473F64 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		24AF6F5D2EEB232200473F64 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				24AF6F5C2EEB232200473F64 /* ChatPrototype.app */,
+				24AF6F5C2EEB232200473F64 /* CoinTrackerApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		24AF6F5B2EEB232200473F64 /* ChatPrototype */ = {
+		24AF6F5B2EEB232200473F64 /* CoinTrackerApp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 24AF6F672EEB232400473F64 /* Build configuration list for PBXNativeTarget "ChatPrototype" */;
+			buildConfigurationList = 24AF6F672EEB232400473F64 /* Build configuration list for PBXNativeTarget "CoinTrackerApp" */;
 			buildPhases = (
 				24AF6F582EEB232200473F64 /* Sources */,
 				24AF6F592EEB232200473F64 /* Frameworks */,
@@ -61,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				24AF6F5E2EEB232200473F64 /* ChatPrototype */,
+				24AF6F5E2EEB232200473F64 /* CoinTrackerApp */,
 			);
-			name = ChatPrototype;
+			name = CoinTrackerApp;
 			packageProductDependencies = (
 			);
 			productName = ChatPrototype;
-			productReference = 24AF6F5C2EEB232200473F64 /* ChatPrototype.app */;
+			productReference = 24AF6F5C2EEB232200473F64 /* CoinTrackerApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 24AF6F572EEB232200473F64 /* Build configuration list for PBXProject "ChatPrototype" */;
+			buildConfigurationList = 24AF6F572EEB232200473F64 /* Build configuration list for PBXProject "CoinTrackerApp" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				24AF6F5B2EEB232200473F64 /* ChatPrototype */,
+				24AF6F5B2EEB232200473F64 /* CoinTrackerApp */,
 			);
 		};
 /* End PBXProject section */
@@ -319,7 +319,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		24AF6F572EEB232200473F64 /* Build configuration list for PBXProject "ChatPrototype" */ = {
+		24AF6F572EEB232200473F64 /* Build configuration list for PBXProject "CoinTrackerApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				24AF6F652EEB232400473F64 /* Debug */,
@@ -328,7 +328,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		24AF6F672EEB232400473F64 /* Build configuration list for PBXNativeTarget "ChatPrototype" */ = {
+		24AF6F672EEB232400473F64 /* Build configuration list for PBXNativeTarget "CoinTrackerApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				24AF6F682EEB232400473F64 /* Debug */,
