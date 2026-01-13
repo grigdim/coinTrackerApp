@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "24AF6F5B2EEB232200473F64"
-               BuildableName = "ChatPrototype.app"
-               BlueprintName = "ChatPrototype"
-               ReferencedContainer = "container:ChatPrototype.xcodeproj">
+               BuildableName = "CoinTrackerApp.app"
+               BlueprintName = "CoinTrackerApp"
+               ReferencedContainer = "container:CoinTrackerApp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "24AF6F5B2EEB232200473F64"
-            BuildableName = "ChatPrototype.app"
-            BlueprintName = "ChatPrototype"
-            ReferencedContainer = "container:ChatPrototype.xcodeproj">
+            BuildableName = "CoinTrackerApp.app"
+            BlueprintName = "CoinTrackerApp"
+            ReferencedContainer = "container:CoinTrackerApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "24AF6F5B2EEB232200473F64"
-            BuildableName = "ChatPrototype.app"
-            BlueprintName = "ChatPrototype"
-            ReferencedContainer = "container:ChatPrototype.xcodeproj">
+            BuildableName = "CoinTrackerApp.app"
+            BlueprintName = "CoinTrackerApp"
+            ReferencedContainer = "container:CoinTrackerApp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
