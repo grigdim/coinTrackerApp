@@ -59,10 +59,34 @@ struct MarketOverviewView: View {
                     let filtered = coins.filter {
                         searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
                     }
+                    
+                    // Only auto-paginate for Top 100 when the user is not searching.
+                    let shouldPaginate = selectedCategory == .top100 && searchText.isEmpty
+
+                    // When we reach the last ~5 rows, trigger loading the next page.
+                    let thresholdIndex = filtered.index(filtered.endIndex, offsetBy: -5, limitedBy: filtered.startIndex) ?? filtered.startIndex
+
 
                     List {
-                        ForEach(filtered) { coin in
+                        ForEach(filtered.indices, id: \.self) { index in
+                            let coin = filtered[index]
                             CoinRowView(coin: coin)
+                                .onAppear {
+                                    guard shouldPaginate else { return }
+                                    if index >= thresholdIndex {
+                                        Task {
+                                            await viewModel.loadNextPage(category: selectedCategory)
+                                        }
+                                    }
+                                }
+                        }
+                        
+                        if shouldPaginate && viewModel.isLoadingNextPage {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
                         }
                     }
                     .listStyle(.plain)
