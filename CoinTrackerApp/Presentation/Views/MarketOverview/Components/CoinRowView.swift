@@ -16,6 +16,7 @@ struct CoinRowView: View {
         let priceText: String
         let change24hText: String
         let isUp: Bool
+        let sparkline: [Double]
         
         init(
             name: String,
@@ -23,7 +24,8 @@ struct CoinRowView: View {
             iconURL: URL?,
             priceText: String,
             change24hText: String,
-            isUp: Bool
+            isUp: Bool,
+            sparkline: [Double]
         ) {
             self.name = name
             self.symbol = symbol
@@ -31,6 +33,7 @@ struct CoinRowView: View {
             self.priceText = priceText
             self.change24hText = change24hText
             self.isUp = isUp
+            self.sparkline = sparkline
         }
         
     }
@@ -74,10 +77,14 @@ struct CoinRowView: View {
                     .font(.headline)
                     .lineLimit(1)
                 
-                Text(coin.change24hText)
-                    .font(.caption)
-                    .foregroundColor(coin.isUp ? .green : .red)
-                    .lineLimit(1)
+                HStack {
+                    SparklineView(values: coin.sparkline)
+                        .frame(width: 32, height: 32)
+                    Text(coin.change24hText)
+                        .font(.caption)
+                        .foregroundColor(coin.isUp ? .green : .red)
+                        .lineLimit(1)
+                }
             }
         }
         .padding(.vertical, 6)
@@ -106,7 +113,8 @@ struct CoinRowView: View {
             iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
             priceText: "43,210.12",
             change24hText: "+2.45%",
-            isUp: true
+            isUp: true,
+            sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
         ))
         
         CoinRowView(coin: .init(
@@ -115,7 +123,8 @@ struct CoinRowView: View {
             iconURL: nil,
             priceText: "$2,312.55",
             change24hText: "-1.12%",
-            isUp: false
+            isUp: false,
+            sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
         ))
     }
     .listStyle(.plain)
