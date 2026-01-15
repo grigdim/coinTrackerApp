@@ -7,12 +7,10 @@
 
 import SwiftUI
 
-struct ViewState: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
-
-#Preview {
-    ViewState()
+/// Generic view state to represent loading lifecycle.
+enum ViewState<Value> {
+    case idle
+    case loading
+    case loaded(Value)
+    case failed(Error)
 }

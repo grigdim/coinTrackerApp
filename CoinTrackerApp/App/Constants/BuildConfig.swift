@@ -1,9 +1,8 @@
 //
-//  PaginationState.swift
+//  BuildConfig.swift
 //  CoinTrackerApp
 //
 //  Created by Dim Grigoriadis on 15/1/26.
 //
 
-import SwiftUI
-
+import Foundation
