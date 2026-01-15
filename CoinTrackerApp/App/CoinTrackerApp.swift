@@ -7,11 +7,13 @@
 
 import SwiftUI
 
-@main
+ @main
 struct CoinTrackerApp: App {
+    @StateObject private var env = AppEnvironment()
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootTabView()
+                .environmentObject(env)
         }
     }
 }
