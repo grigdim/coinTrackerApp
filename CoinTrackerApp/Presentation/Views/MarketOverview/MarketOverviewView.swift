@@ -28,6 +28,10 @@ struct MarketOverviewView: View {
     @StateObject private var viewModel = MarketOverviewViewModel()
     @State private var selectedCategory: MarketCategory = .top100
     @State private var searchText: String = ""
+    @State private var isSwitchingCategory: Bool = false
+    @State private var latestOffsets: [String: CGFloat] = [:]
+    @State private var switchTask: Task<Void, Never>?
+    @State private var displayedCategory: MarketCategory = .top100
 
     var body: some View {
         VStack(spacing: 0) {
@@ -43,7 +47,10 @@ struct MarketOverviewView: View {
             // This reduces search bar jumping/disappearing.
             contentList
         }
-        .task { await viewModel.load(for: selectedCategory) }
+        .task {
+            displayedCategory = selectedCategory
+            await viewModel.load(for: selectedCategory)
+        }
         .navigationDestination(for: CoinDetailsRoute.self) { route in
             CoinDetailsView()
                 .navigationTitle(route.name)
@@ -105,9 +112,12 @@ struct MarketOverviewView: View {
                             CoinRowView(coin: coin)
                                 .onAppear {
                                     guard shouldPaginate else { return }
+                                    guard !isSwitchingCategory else { return }
+                                    
                                     if index >= thresholdIndex {
-                                        guard selectedCategory == .top100 else { return }
-                                        Task { await viewModel.loadNextPage(for: selectedCategory) }
+                                        let category = selectedCategory
+                                        guard category == .top100 else { return }
+                                        Task { await viewModel.loadNextPage(for: category) }
                                     }
                                 }
                                 .background(
@@ -143,19 +153,52 @@ struct MarketOverviewView: View {
                 }
             }
             .onPreferenceChange(RowOffsetKey.self) { offsets in
+                latestOffsets = offsets
+                guard !isSwitchingCategory else { return }
+                
                 let visible = offsets.filter { $0.value >= 0 }
                 if let topMost = visible.min(by: { $0.value < $1.value })?.key {
-                    viewModel.saveScrolledAnchor(for: selectedCategory, id: topMost)
+                    
+                    viewModel.saveScrolledAnchor(for: displayedCategory, id: topMost)
                 }
             }
             .onChange(of: selectedCategory) { newValue in
-                Task {
+                // Cancel any in-flight switch task so only the latest selection wins
+                switchTask?.cancel()
+
+                switchTask = Task {
+                    // 1) Save anchor for the category currently displayed BEFORE switching
+                    let visible = latestOffsets.filter { $0.value >= 0 }
+                    if let topMost = visible.min(by: { $0.value < $1.value })?.key {
+                        viewModel.saveScrolledAnchor(for: displayedCategory, id: topMost)
+                    }
+
+                    isSwitchingCategory = true
+                    defer {
+                        // allow saving again after a brief settle
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 100_000_000)
+                            isSwitchingCategory = false
+                        }
+                    }
+
+                    // 2) Load data for the new category
                     await viewModel.load(for: newValue)
+                    guard !Task.isCancelled else { return }
                     guard selectedCategory == newValue else { return }
+
+                    // 3) Update displayedCategory only once data is now the source of truth
+                    displayedCategory = newValue
+
+                    // 4) Yield so the list lays out
+                    try? await Task.sleep(nanoseconds: 50_000_000)
+                    guard !Task.isCancelled else { return }
+
+                    // 5) Restore anchor or fallback to first row (Fix A)
                     if let anchor = viewModel.scrollToAnchor(for: newValue) {
-                        // yield so the list has time to lay out
-                        try? await Task.sleep(nanoseconds: 50_000_000)
                         proxy.scrollTo(anchor, anchor: .top)
+                    } else if case .loaded(let coins) = viewModel.state, let firstId = coins.first?.id {
+                        proxy.scrollTo(firstId, anchor: .top)
                     }
                 }
             }
