@@ -35,24 +35,17 @@ final class MarketOverviewViewModel: ObservableObject {
         state = .loading
         pageByCategory[category] = 1
 
-        // Simulate network latency
-        try? await Task.sleep(nanoseconds: 500_000_000)
-
-        // Mock data based on selected category
-        let coins: [CoinRowView.CoinModel]
-        switch category {
-        case .top100:
-            coins = (1...20).map { CoinRowView.CoinModel.init(id: "TOP\($0)" , name: "Top Coin \($0)", symbol: "TOP\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "+\(10 + $0)", isUp: true, sparkline: [10.0, 14.5,12.8, 18.2, 16.9, 22.4, 20.7, 26.0]) }
-        case .trending:
-            coins = (1...20).map { CoinRowView.CoinModel.init(id: "TREND\($0)", name: "Trending Coin \($0)", symbol: "TREND\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "+\(10 + $0)", isUp: true, sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]) }
-        case .gainers:
-            coins = (1...20).map { CoinRowView.CoinModel.init(id: "GAIN\($0)", name: "Gainer Coin \($0)", symbol: "GAIN\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "+\(10 + $0)", isUp: true, sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]) }
-        case .losers:
-            coins = (1...20).map { CoinRowView.CoinModel.init(id:"LOSE\($0)", name: "Loser Coin \($0)", symbol: "LOSE\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "-\(10 + $0)", isUp: false, sparkline: [26.0, 22.1, 24.3, 19.5, 21.0, 16.4, 18.2, 12.0]) }
+        do {
+            let coins = try await fetchCoins(for: category)
+            cachedCoins[category] = coins
+            state = .loaded(coins)
+        } catch {
+            if let cached = cachedCoins[category], !cached.isEmpty {
+                state = .loaded(cached)
+            } else {
+                state = .failed(error)
+            }
         }
-
-        cachedCoins[category] = coins
-        state = .loaded(coins)
     }
     
     func loadNextPage(for category: MarketCategory) async {
@@ -86,5 +79,20 @@ final class MarketOverviewViewModel: ObservableObject {
     
     func scrollToAnchor (for category: MarketCategory) -> String? {
         scrollAnchorByCategory[category]
+    }
+    
+    private func fetchCoins(for category: MarketCategory) async throws -> [CoinRowView.CoinModel] {
+        let coins: [CoinRowView.CoinModel]
+        switch category {
+        case .top100:
+            coins = (1...20).map { CoinRowView.CoinModel.init(id: "TOP\($0)" , name: "Top Coin \($0)", symbol: "TOP\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "+\(10 + $0)", isUp: true, sparkline: [10.0, 14.5,12.8, 18.2, 16.9, 22.4, 20.7, 26.0]) }
+        case .trending:
+            coins = (1...20).map { CoinRowView.CoinModel.init(id: "TREND\($0)", name: "Trending Coin \($0)", symbol: "TREND\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "+\(10 + $0)", isUp: true, sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]) }
+        case .gainers:
+            coins = (1...20).map { CoinRowView.CoinModel.init(id: "GAIN\($0)", name: "Gainer Coin \($0)", symbol: "GAIN\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "+\(10 + $0)", isUp: true, sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]) }
+        case .losers:
+            coins = (1...20).map { CoinRowView.CoinModel.init(id:"LOSE\($0)", name: "Loser Coin \($0)", symbol: "LOSE\($0)", iconURL: nil, priceText: "\(100 + $0)", change24hText: "-\(10 + $0)", isUp: false, sparkline: [26.0, 22.1, 24.3, 19.5, 21.0, 16.4, 18.2, 12.0]) }
+        }
+        return coins
     }
 }

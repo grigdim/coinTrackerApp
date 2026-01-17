@@ -106,6 +106,7 @@ struct MarketOverviewView: View {
                                 .onAppear {
                                     guard shouldPaginate else { return }
                                     if index >= thresholdIndex {
+                                        guard selectedCategory == .top100 else { return }
                                         Task { await viewModel.loadNextPage(for: selectedCategory) }
                                     }
                                 }
@@ -150,6 +151,7 @@ struct MarketOverviewView: View {
             .onChange(of: selectedCategory) { newValue in
                 Task {
                     await viewModel.load(for: newValue)
+                    guard selectedCategory == newValue else { return }
                     if let anchor = viewModel.scrollToAnchor(for: newValue) {
                         // yield so the list has time to lay out
                         try? await Task.sleep(nanoseconds: 50_000_000)
