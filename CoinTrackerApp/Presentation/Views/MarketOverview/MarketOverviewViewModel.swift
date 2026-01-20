@@ -119,7 +119,8 @@ final class MarketOverviewViewModel: ObservableObject {
                 isUp: true,
                 sparkline: [10.0, 14.5, 12.8, 18.2, 16.9, 22.4, 20.7, 26.0],
                 description: "asdf",
-                externalLink: URL(string: "https://www.google.com")
+                websiteURL: URL(string: "https://www.google.com"),
+                explorerURL: nil
             )
         }
 
@@ -162,7 +163,8 @@ final class MarketOverviewViewModel: ObservableObject {
                     isUp: true,
                     sparkline: [10.0, 14.5, 12.8, 18.2, 16.9, 22.4, 20.7, 26.0],
                     description: "asdf",
-                    externalLink: URL(string: "https://www.google.com")
+                    websiteURL: URL(string: "https://www.google.com"),
+                    explorerURL: nil
                 )
             }
         case .trending:
@@ -182,7 +184,8 @@ final class MarketOverviewViewModel: ObservableObject {
                     isUp: true,
                     sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
                     description: "asdf",
-                    externalLink: URL(string: "https://www.google.com")
+                    websiteURL: URL(string: "https://www.google.com"),
+                    explorerURL: nil
                 )
             }
         case .gainers:
@@ -202,7 +205,8 @@ final class MarketOverviewViewModel: ObservableObject {
                     isUp: true,
                     sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
                     description: "asdf",
-                    externalLink: URL(string: "https://www.google.com")
+                    websiteURL: URL(string: "https://www.google.com"),
+                    explorerURL: nil
                 )
             }
         case .losers:
@@ -222,7 +226,8 @@ final class MarketOverviewViewModel: ObservableObject {
                     isUp: false,
                     sparkline: [26.0, 22.1, 24.3, 19.5, 21.0, 16.4, 18.2, 12.0],
                     description: "asdf",
-                    externalLink: URL(string: "https://www.google.com")
+                    websiteURL: URL(string: "https://www.google.com"),
+                    explorerURL: nil
                 )
             }
         }

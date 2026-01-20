@@ -8,35 +8,46 @@
 import SwiftUI
 
 struct LinkRowView: View {
-    let coin: CoinDetails
+    let title: String
+    let url: URL?
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        if let url {
+            Link(destination: url) {
+                rowContent(trailingText: url.host ?? url.absoluteString)
+            }
+        } else {
+            rowContent(trailingText: "Not available")
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private func rowContent(trailingText: String) -> some View {
+        HStack {
+            Text(title)
+
+            Spacer()
+
+            Text(trailingText)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .foregroundColor(.blue)
+
+            Image(systemName: "chevron.right")
+                .foregroundColor(.secondary)
+                .font(.caption)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.gray.opacity(0.08))
+        )
     }
 }
 
 #Preview {
-    LinkRowView(coin: .init(
-        id: "bitcoin",
-        name: "Bitcoin",
-        symbol: "BTC",
-        iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
-        price: "$42,350.12",
-        marketCap: "$830B",
-        volume: "$18.4B",
-        circulatingSupply: "19.6M BTC",
-        ath: "$69,000",
-        atl: "$67,000",
-        change24h: "+3.42%",
-        isUp: true,
-        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
-        description: """
-        Bitcoin is a decentralized digital currency that operates without a central authority or intermediary. 
-        It enables peer-to-peer transactions secured by cryptography and recorded on a public, immutable ledger 
-        known as the blockchain.
-
-        Created in 2009, Bitcoin introduced the concept of scarce digital money and remains the largest and most 
-        widely adopted cryptocurrency by market capitalization.
-        """,
-        externalLink: URL(string: "https://bitcoin.org")
-    ))
+    LinkRowView(
+        title: "Website",
+        url: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png")
+    )
 }

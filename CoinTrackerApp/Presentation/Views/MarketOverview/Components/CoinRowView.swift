@@ -93,8 +93,8 @@ struct CoinRowView: View {
             isUp: true,
             sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
             description: "asdf",
-            externalLink: URL(string: "https://www.bitcoin.com")
-
+            websiteURL: URL(string: "https://www.bitcoin.com"),
+            explorerURL: nil
         ))
         
         CoinRowView(coin: .init(
@@ -112,7 +112,8 @@ struct CoinRowView: View {
             isUp: false,
             sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
             description: "asdf",
-            externalLink: URL(string: "https://www.ethereum.com")
+            websiteURL: URL(string: "https://www.ethereum.com"),
+            explorerURL: nil
         ))
     }
     .listStyle(.plain)

@@ -22,7 +22,6 @@ struct PriceChartView: View {
                 .font(.headline)
                 .foregroundColor(.secondary)
         }
-        .padding()
     }
 }
 
