@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CoinRowView: View {
     struct CoinModel: Identifiable, Hashable {
-        let id: UUID = UUID()
+        let id: String
         let name: String
         let symbol: String
         let iconURL: URL?
@@ -19,6 +19,7 @@ struct CoinRowView: View {
         let sparkline: [Double]
         
         init(
+            id: String,
             name: String,
             symbol: String,
             iconURL: URL?,
@@ -27,6 +28,7 @@ struct CoinRowView: View {
             isUp: Bool,
             sparkline: [Double]
         ) {
+            self.id = id
             self.name = name
             self.symbol = symbol
             self.iconURL = iconURL
@@ -108,6 +110,7 @@ struct CoinRowView: View {
 #Preview {
     List{
         CoinRowView(coin: .init(
+            id:"btc",
             name: "Bitcoin",
             symbol: "btc",
             iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
@@ -118,6 +121,7 @@ struct CoinRowView: View {
         ))
         
         CoinRowView(coin: .init(
+            id: "eth",
             name: "Ethereum",
             symbol: "eth",
             iconURL: nil,
