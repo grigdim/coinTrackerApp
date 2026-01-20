@@ -13,20 +13,24 @@ struct StatCardViewMockModel {
 }
 
 struct StatCardView: View {
-    
     let title: String
     let value: String
-    
+
     var body: some View {
-        VStack(alignment: .center, spacing: 6) {
+        VStack(spacing: 6) {
             Text(title)
-                .font(.title)
-                .foregroundColor(.secondary)
-            
-            Text(value)
                 .font(.caption)
-                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+
+            Text(value)
+                .font(.headline)
+                .fontWeight(.semibold)
         }
+        .frame(maxWidth: .infinity, minHeight: 70)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.gray.opacity(0.08))
+        )
     }
 }
 

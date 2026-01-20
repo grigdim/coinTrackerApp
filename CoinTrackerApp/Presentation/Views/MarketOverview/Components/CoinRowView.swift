@@ -92,7 +92,9 @@ struct CoinRowView: View {
             change24h: "+2.45%",
             isUp: true,
             sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
-
+            description: "asdf",
+            websiteURL: URL(string: "https://www.bitcoin.com"),
+            explorerURL: nil
         ))
         
         CoinRowView(coin: .init(
@@ -109,6 +111,9 @@ struct CoinRowView: View {
             change24h: "-1.12%",
             isUp: false,
             sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
+            description: "asdf",
+            websiteURL: URL(string: "https://www.ethereum.com"),
+            explorerURL: nil
         ))
     }
     .listStyle(.plain)

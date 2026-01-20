@@ -37,6 +37,9 @@ struct CoinDetails: Identifiable, Hashable {
     let change24h: String
     let isUp: Bool
     let sparkline: [Double]
+    let description: String?
+    let websiteURL: URL?
+    let explorerURL: URL?
 }
 
 private let mockCoin =
@@ -53,7 +56,17 @@ private let mockCoin =
         atl: "$67,000",
         change24h: "+3.42%",
         isUp: true,
-        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
+        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
+        description: """
+        Bitcoin is a decentralized digital currency that operates without a central authority or intermediary. 
+        It enables peer-to-peer transactions secured by cryptography and recorded on a public, immutable ledger 
+        known as the blockchain.
+
+        Created in 2009, Bitcoin introduced the concept of scarce digital money and remains the largest and most 
+        widely adopted cryptocurrency by market capitalization.
+        """,
+        websiteURL: URL(string: "https://bitcoin.org"),
+        explorerURL: nil
     )
 
 struct CoinDetailsView: View {
@@ -78,6 +91,7 @@ struct CoinDetailsView: View {
     var body: some View {
         ScrollView {
             VStack {
+                priceHeader
                 
                 statsGrid
                 
@@ -87,15 +101,22 @@ struct CoinDetailsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding()
                 .onChange(of: selectedChartRange) { newValue in
                     viewModel.load(for: selectedChartRange)
                 }
                 
-                chartContent
+                Text("Price Chart")
+                    .font(.headline)
+                    .padding(.vertical, 4)
+                PriceChartView()
+                
+                ExpandableTextView (name: coin.name, description: coin.description)
+
+                linksSection
             }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.top, 8)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 8) {
@@ -118,22 +139,42 @@ struct CoinDetailsView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
     }
-    
-    private var chartContent: some View {
-        return VStack(alignment: .leading) {
-            PriceChartView()
-        }
-    }
-    
+        
     private var statsGrid: some View {
         LazyVGrid(columns: gridColumns, spacing: 12) {
             StatCardView(title: "Market Cap", value: coin.marketCap)
-            StatCardView(title: "24h", value: coin.change24h)
             StatCardView(title: "Volume", value: coin.volume)
-            StatCardView(title: "Supply", value: coin.circulatingSupply)
             StatCardView(title: "ATH", value: coin.ath)
             StatCardView(title: "ATL", value: coin.atl)
         }
+    }
+    
+    private var priceHeader: some View {
+        VStack(spacing: 6) {
+            Text(coin.price)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            HStack(spacing: 8) {
+                Text(coin.symbol)
+                    .foregroundColor(.secondary)
+
+                Text(coin.change24h)
+                    .foregroundColor(coin.isUp ? .green : .red)
+            }
+            .font(.title3)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private var linksSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Links")
+                .font(.headline)
+            LinkRowView(title:"Website:", url: coin.websiteURL)
+            LinkRowView(title:"Explorer:", url: coin.explorerURL)
+        }
+        .padding()
     }
 }
 
