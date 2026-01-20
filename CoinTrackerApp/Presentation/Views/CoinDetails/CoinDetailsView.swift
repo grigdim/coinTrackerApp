@@ -7,12 +7,142 @@
 
 import SwiftUI
 
+struct CoinDetailsRoute: Hashable {
+    let id: String
+    let name: String
+    let iconURL: URL?
+}
+
+enum ChartRange: String, CaseIterable, Identifiable {
+    case day = "24H"
+    case week = "7D"
+    case month = "1M"
+    case year = "1Y"
+    
+    var id: String { self.rawValue }
+}
+
+// TEMP: UI scaffold mock, will be replaced by real domain model
+struct CoinDetails: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let symbol: String
+    let iconURL: URL?
+    let price: String
+    let marketCap: String
+    let volume: String
+    let circulatingSupply: String
+    let ath: String
+    let atl: String
+    let change24h: String
+    let isUp: Bool
+    let sparkline: [Double]
+}
+
+private let mockCoin =
+    CoinDetails(
+        id: "bitcoin",
+        name: "Bitcoin",
+        symbol: "BTC",
+        iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
+        price: "$42,350.12",
+        marketCap: "$830B",
+        volume: "$18.4B",
+        circulatingSupply: "19.6M BTC",
+        ath: "$69,000",
+        atl: "$67,000",
+        change24h: "+3.42%",
+        isUp: true,
+        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
+    )
+
 struct CoinDetailsView: View {
+    @StateObject private var viewModel = CoinDetailsViewModel()
+
+    @State private var selectedChartRange: ChartRange = .day
+    
+    private let route: CoinDetailsRoute
+    
+    init(route: CoinDetailsRoute) {
+        self.route = route
+    }
+    
+    private let coin = mockCoin
+    
+    private let gridColumns: [GridItem] = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+    
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ScrollView {
+            VStack {
+                
+                statsGrid
+                
+                Picker("SelectedChartRange", selection: $selectedChartRange) {
+                    ForEach(ChartRange.allCases) { chartRange in
+                        Text(chartRange.rawValue).tag(chartRange)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding()
+                .onChange(of: selectedChartRange) { newValue in
+                    viewModel.load(for: selectedChartRange)
+                }
+                
+                chartContent
+            }
+        }
+        .padding()
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 8) {
+                    AsyncImage(url: route.iconURL) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFit()
+                        case .empty:
+                            ProgressView()
+                        default:
+                            Image(systemName: "bitcoinsign.circle")
+                        }
+                    }
+                    .frame(width: 20, height: 20)
+
+                    Text(route.name)
+                        .font(.headline)
+                }
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private var chartContent: some View {
+        return VStack(alignment: .leading) {
+            PriceChartView()
+        }
+    }
+    
+    private var statsGrid: some View {
+        LazyVGrid(columns: gridColumns, spacing: 12) {
+            StatCardView(title: "Market Cap", value: coin.marketCap)
+            StatCardView(title: "24h", value: coin.change24h)
+            StatCardView(title: "Volume", value: coin.volume)
+            StatCardView(title: "Supply", value: coin.circulatingSupply)
+            StatCardView(title: "ATH", value: coin.ath)
+            StatCardView(title: "ATL", value: coin.atl)
+        }
     }
 }
 
 #Preview {
-    CoinDetailsView()
+    NavigationStack {
+        CoinDetailsView(route: .init(
+            id: "bitcoin",
+            name: "Bitcoin",
+            iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png")
+        ))
+    }
 }

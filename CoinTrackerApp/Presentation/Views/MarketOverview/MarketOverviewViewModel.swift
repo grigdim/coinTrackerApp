@@ -5,7 +5,7 @@ import Foundation
 final class MarketOverviewViewModel: ObservableObject {
 
     // MARK: - Stored data
-    private var cachedCoins: [MarketCategory: [CoinRowView.CoinModel]] = [:]
+    private var cachedCoins: [MarketCategory: [CoinDetails]] = [:]
 
     /// Last successfully loaded page per category (Top100 uses page 1,2,3...)
     private var loadedPageByCategory: [MarketCategory: Int] = [:]
@@ -21,7 +21,7 @@ final class MarketOverviewViewModel: ObservableObject {
 
     // MARK: - Published state
     @Published private(set) var isLoadingNextPage: Bool = false
-    @Published private(set) var state: ViewState<[CoinRowView.CoinModel]> = .idle
+    @Published private(set) var state: ViewState<[CoinDetails]> = .idle
 
     // MARK: - Public API
 
@@ -103,16 +103,21 @@ final class MarketOverviewViewModel: ObservableObject {
         guard case .loaded(let currentCoinsNow) = state else { return }
 
         let startIndex = (nextPage - 1) * 20 + 1
-        let newCoins: [CoinRowView.CoinModel] = (startIndex..<(startIndex + 20)).map { i in
-            CoinRowView.CoinModel(
+        let newCoins: [CoinDetails] = (startIndex..<(startIndex + 20)).map { i in
+            CoinDetails(
                 id: "TOP\(i)",
                 name: "Top Coin \(i)",
                 symbol: "TOP\(i)",
                 iconURL: nil,
-                priceText: "\(100 + i)",
-                change24hText: "+\(10 + i)",
-                isUp: false,
-                sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
+                price: "\(100 + i)",
+                marketCap: "\(1_000_000 + i * 10_000)",
+                volume: "\(50_000 + i * 1_000)",
+                circulatingSupply: "\(1_000_000 + i * 5_000)",
+                ath: "\(200 + i)",
+                atl: "\(10 + i)",
+                change24h: "+\(10 + i)",
+                isUp: true,
+                sparkline: [10.0, 14.5, 12.8, 18.2, 16.9, 22.4, 20.7, 26.0]
             )
         }
 
@@ -136,56 +141,76 @@ final class MarketOverviewViewModel: ObservableObject {
 
     // MARK: - Mock fetch (replace with real networking later)
 
-    private func fetchCoins(for category: MarketCategory) async throws -> [CoinRowView.CoinModel] {
+    private func fetchCoins(for category: MarketCategory) async throws -> [CoinDetails] {
         switch category {
         case .top100:
             return (1...20).map {
-                CoinRowView.CoinModel(
+                CoinDetails(
                     id: "TOP\($0)",
                     name: "Top Coin \($0)",
                     symbol: "TOP\($0)",
                     iconURL: nil,
-                    priceText: "\(100 + $0)",
-                    change24hText: "+\(10 + $0)",
+                    price: "\(100 + $0)",
+                    marketCap: "\(1_000_000 + $0 * 10_000)",
+                    volume: "\(50_000 + $0 * 1_000)",
+                    circulatingSupply: "\(1_000_000 + $0 * 5_000)",
+                    ath: "\(200 + $0)",
+                    atl: "\(10 + $0)",
+                    change24h: "+\(10 + $0)",
                     isUp: true,
                     sparkline: [10.0, 14.5, 12.8, 18.2, 16.9, 22.4, 20.7, 26.0]
                 )
             }
         case .trending:
             return (1...20).map {
-                CoinRowView.CoinModel(
+                CoinDetails(
                     id: "TREND\($0)",
                     name: "Trending Coin \($0)",
                     symbol: "TREND\($0)",
                     iconURL: nil,
-                    priceText: "\(100 + $0)",
-                    change24hText: "+\(10 + $0)",
+                    price: "\(100 + $0)",
+                    marketCap: "\(1_000_000 + $0 * 10_000)",
+                    volume: "\(50_000 + $0 * 1_000)",
+                    circulatingSupply: "\(1_000_000 + $0 * 5_000)",
+                    ath: "\(200 + $0)",
+                    atl: "\(10 + $0)",
+                    change24h: "+\(10 + $0)",
                     isUp: true,
                     sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
                 )
             }
         case .gainers:
             return (1...20).map {
-                CoinRowView.CoinModel(
+                CoinDetails(
                     id: "GAIN\($0)",
                     name: "Gainer Coin \($0)",
                     symbol: "GAIN\($0)",
                     iconURL: nil,
-                    priceText: "\(100 + $0)",
-                    change24hText: "+\(10 + $0)",
+                    price: "\(100 + $0)",
+                    marketCap: "\(1_000_000 + $0 * 10_000)",
+                    volume: "\(50_000 + $0 * 1_000)",
+                    circulatingSupply: "\(1_000_000 + $0 * 5_000)",
+                    ath: "\(200 + $0)",
+                    atl: "\(10 + $0)",
+                    change24h: "+\(10 + $0)",
                     isUp: true,
                     sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
                 )
             }
         case .losers:
             return (1...20).map {
-                CoinRowView.CoinModel(
+                CoinDetails(
                     id: "LOSE\($0)",
                     name: "Loser Coin \($0)",
                     symbol: "LOSE\($0)",
                     iconURL: nil,
-                    priceText: "\(100 + $0)",
-                    change24hText: "-\(10 + $0)",
+                    price: "\(100 + $0)",
+                    marketCap: "\(1_000_000 + $0 * 10_000)",
+                    volume: "\(50_000 + $0 * 1_000)",
+                    circulatingSupply: "\(1_000_000 + $0 * 5_000)",
+                    ath: "\(200 + $0)",
+                    atl: "\(10 + $0)",
+                    change24h: "-\(10 + $0)",
                     isUp: false,
                     sparkline: [26.0, 22.1, 24.3, 19.5, 21.0, 16.4, 18.2, 12.0]
                 )

@@ -9,7 +9,20 @@ import SwiftUI
 
 struct PriceChartView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.gray.opacity(0.15))
+                .frame(height: 220)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
+
+            Text("Mock Price Chart")
+                .font(.headline)
+                .foregroundColor(.secondary)
+        }
+        .padding()
     }
 }
 
