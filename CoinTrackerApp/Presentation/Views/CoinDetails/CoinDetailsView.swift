@@ -37,6 +37,8 @@ struct CoinDetails: Identifiable, Hashable {
     let change24h: String
     let isUp: Bool
     let sparkline: [Double]
+    let description: String?
+    let externalLink: URL?
 }
 
 private let mockCoin =
@@ -53,7 +55,16 @@ private let mockCoin =
         atl: "$67,000",
         change24h: "+3.42%",
         isUp: true,
-        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
+        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
+        description: """
+        Bitcoin is a decentralized digital currency that operates without a central authority or intermediary. 
+        It enables peer-to-peer transactions secured by cryptography and recorded on a public, immutable ledger 
+        known as the blockchain.
+
+        Created in 2009, Bitcoin introduced the concept of scarce digital money and remains the largest and most 
+        widely adopted cryptocurrency by market capitalization.
+        """,
+        externalLink: URL(string: "https://bitcoin.org")
     )
 
 struct CoinDetailsView: View {
@@ -78,6 +89,8 @@ struct CoinDetailsView: View {
     var body: some View {
         ScrollView {
             VStack {
+                priceHeader
+                    .padding()
                 
                 statsGrid
                 
@@ -93,6 +106,8 @@ struct CoinDetailsView: View {
                 }
                 
                 chartContent
+                
+                ExpandableTextView(coin: coin)
             }
         }
         .padding()
@@ -128,11 +143,26 @@ struct CoinDetailsView: View {
     private var statsGrid: some View {
         LazyVGrid(columns: gridColumns, spacing: 12) {
             StatCardView(title: "Market Cap", value: coin.marketCap)
-            StatCardView(title: "24h", value: coin.change24h)
             StatCardView(title: "Volume", value: coin.volume)
-            StatCardView(title: "Supply", value: coin.circulatingSupply)
             StatCardView(title: "ATH", value: coin.ath)
             StatCardView(title: "ATL", value: coin.atl)
+        }
+    }
+    
+    private var priceHeader: some View {
+        VStack(spacing: 0) {
+            Text(coin.price)
+                .font(.largeTitle)
+                .bold()
+            Spacer()
+            if coin.change24h.isEmpty == false {
+                HStack(alignment: .top) {
+                    Text(coin.symbol)
+                        .font(.title2)
+                    Text(coin.change24h)
+                        .font(.title2)
+                }
+            }
         }
     }
 }

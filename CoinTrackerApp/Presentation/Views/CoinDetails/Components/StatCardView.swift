@@ -18,15 +18,21 @@ struct StatCardView: View {
     let value: String
     
     var body: some View {
-        VStack(alignment: .center, spacing: 6) {
-            Text(title)
-                .font(.title)
-                .foregroundColor(.secondary)
-            
-            Text(value)
+        VStack(spacing: 4) {
+            Text(title.uppercased())
                 .font(.caption)
-                .fontWeight(.bold)
+                .foregroundColor(.secondary)
+
+            Text(value)
+                .font(.headline)
+                .fontWeight(.semibold)
         }
+        .frame(maxWidth: .infinity, minHeight: 60)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.gray.opacity(0.08))
+        )
     }
 }
 
