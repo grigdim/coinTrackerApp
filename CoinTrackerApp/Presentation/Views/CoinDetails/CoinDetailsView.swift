@@ -73,6 +73,7 @@ struct CoinDetailsView: View {
     @StateObject private var viewModel = CoinDetailsViewModel()
 
     @State private var selectedChartRange: ChartRange = .day
+    @State private var isFavorite: Bool = false
     
     private let route: CoinDetailsRoute
     
@@ -135,6 +136,18 @@ struct CoinDetailsView: View {
                     Text(route.name)
                         .font(.headline)
                 }
+            }
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    withAnimation (.easeInOut) {
+                        isFavorite.toggle()
+                    }
+                } label: {
+                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                        .symbolRenderingMode(.hierarchical)
+                }
+                .accessibilityLabel(isFavorite ? "Unfavorite" : "Favorite")
             }
         }
         .navigationBarTitleDisplayMode(.inline)
