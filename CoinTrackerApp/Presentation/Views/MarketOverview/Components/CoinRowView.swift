@@ -8,39 +8,8 @@
 import SwiftUI
 
 struct CoinRowView: View {
-    struct CoinModel: Identifiable, Hashable {
-        let id: String
-        let name: String
-        let symbol: String
-        let iconURL: URL?
-        let priceText: String
-        let change24hText: String
-        let isUp: Bool
-        let sparkline: [Double]
-        
-        init(
-            id: String,
-            name: String,
-            symbol: String,
-            iconURL: URL?,
-            priceText: String,
-            change24hText: String,
-            isUp: Bool,
-            sparkline: [Double]
-        ) {
-            self.id = id
-            self.name = name
-            self.symbol = symbol
-            self.iconURL = iconURL
-            self.priceText = priceText
-            self.change24hText = change24hText
-            self.isUp = isUp
-            self.sparkline = sparkline
-        }
-        
-    }
     
-    let coin: CoinModel
+    let coin: CoinDetails
     
     var body: some View {
         HStack(spacing:12){
@@ -75,14 +44,14 @@ struct CoinRowView: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 2) {
-                Text(coin.priceText)
+                Text(coin.price)
                     .font(.headline)
                     .lineLimit(1)
                 
                 HStack {
                     SparklineView(values: coin.sparkline)
                         .frame(width: 32, height: 32)
-                    Text(coin.change24hText)
+                    Text(coin.change24h)
                         .font(.caption)
                         .foregroundColor(coin.isUp ? .green : .red)
                         .lineLimit(1)
@@ -114,10 +83,16 @@ struct CoinRowView: View {
             name: "Bitcoin",
             symbol: "btc",
             iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
-            priceText: "43,210.12",
-            change24hText: "+2.45%",
+            price: "43,210.12",
+            marketCap: "$850B",
+            volume: "$32B",
+            circulatingSupply: "19,450,000 BTC",
+            ath: "$69,000",
+            atl: "$67",
+            change24h: "+2.45%",
             isUp: true,
-            sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
+            sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
+
         ))
         
         CoinRowView(coin: .init(
@@ -125,10 +100,15 @@ struct CoinRowView: View {
             name: "Ethereum",
             symbol: "eth",
             iconURL: nil,
-            priceText: "$2,312.55",
-            change24hText: "-1.12%",
+            price: "$2,312.55",
+            marketCap: "$280B",
+            volume: "$12B",
+            circulatingSupply: "120,300,000 ETH",
+            ath: "$4,878",
+            atl: "$0.43",
+            change24h: "-1.12%",
             isUp: false,
-            sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9]
+            sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
         ))
     }
     .listStyle(.plain)

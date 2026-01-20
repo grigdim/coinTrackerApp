@@ -1,8 +1,12 @@
 import SwiftUI
 
-private struct CoinDetailsRoute: Hashable {
-    let id: String
-    let name: String
+enum MarketCategory: String, CaseIterable, Identifiable {
+    case top100 = "Top 100"
+    case trending = "Trending"
+    case gainers = "Gainers"
+    case losers = "Losers"
+    
+    var id: String { rawValue }
 }
 
 private struct MarketOverviewNoSearchResultsView: View {
@@ -52,15 +56,13 @@ struct MarketOverviewView: View {
             await viewModel.load(for: selectedCategory)
         }
         .navigationDestination(for: CoinDetailsRoute.self) { route in
-            CoinDetailsView()
-                .navigationTitle(route.name)
-                .navigationBarTitleDisplayMode(.inline)
+            CoinDetailsView(route: route)
         }
     }
 
     private var contentList: some View {
         // Resolve coins for the list without removing the list from the hierarchy.
-        let coins: [CoinRowView.CoinModel] = {
+        let coins: [CoinDetails] = {
             if case .loaded(let c) = viewModel.state { return c }
             return []
         }()
@@ -108,7 +110,13 @@ struct MarketOverviewView: View {
                 case .loaded:
                     // Main rows
                     ForEach(Array(filtered.enumerated()), id: \.element.id) { index, coin in
-                        NavigationLink(value: CoinDetailsRoute(id: coin.id, name: coin.name)) {
+                        NavigationLink(
+                            value: CoinDetailsRoute(
+                                id: coin.id,
+                                name: coin.name,
+                                iconURL: coin.iconURL
+                            )
+                        ){
                             CoinRowView(coin: coin)
                                 .onAppear {
                                     guard shouldPaginate else { return }

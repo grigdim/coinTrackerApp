@@ -7,12 +7,29 @@
 
 import SwiftUI
 
+struct StatCardViewMockModel {
+    let title: String
+    let value: String
+}
+
 struct StatCardView: View {
+    
+    let title: String
+    let value: String
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack(alignment: .center, spacing: 6) {
+            Text(title)
+                .font(.title)
+                .foregroundColor(.secondary)
+            
+            Text(value)
+                .font(.caption)
+                .fontWeight(.bold)
+        }
     }
 }
 
 #Preview {
-    StatCardView()
+    StatCardView(title: "Hello", value: "World")
 }
