@@ -56,6 +56,11 @@ struct MarketOverviewView: View {
             await viewModel.load(for: selectedCategory)
         }
         .navigationDestination(for: CoinDetailsRoute.self) { route in
+            let apiClient = MockApiClient()
+            let repo = CoinRepositoryImpl(apiClient: apiClient)
+            let useCase = GetCoinDetailUseCaseImpl(repository: repo)
+            let vm = CoinDetailsViewModel(getCoinDetail: useCase)
+
             CoinDetailsView(route: route)
         }
     }

@@ -79,42 +79,45 @@ struct CoinRowView: View {
 #Preview {
     List{
         CoinRowView(coin: .init(
-            id:"btc",
+            id: "btc",
             name: "Bitcoin",
             symbol: "btc",
             iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
             price: "43,210.12",
+            change24h: "+2.45%",
+            isUp: true,
             marketCap: "$850B",
             volume: "$32B",
             circulatingSupply: "19,450,000 BTC",
             ath: "$69,000",
             atl: "$67",
-            change24h: "+2.45%",
-            isUp: true,
             sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
             description: "asdf",
             websiteURL: URL(string: "https://www.bitcoin.com"),
-            explorerURL: nil
+            explorerURL: nil,
+            subredditURL: nil
         ))
-        
+
         CoinRowView(coin: .init(
             id: "eth",
             name: "Ethereum",
             symbol: "eth",
             iconURL: nil,
             price: "$2,312.55",
+            change24h: "-1.12%",
+            isUp: false,
             marketCap: "$280B",
             volume: "$12B",
             circulatingSupply: "120,300,000 ETH",
             ath: "$4,878",
             atl: "$0.43",
-            change24h: "-1.12%",
-            isUp: false,
             sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
             description: "asdf",
             websiteURL: URL(string: "https://www.ethereum.com"),
-            explorerURL: nil
+            explorerURL: nil,
+            subredditURL: nil
         ))
     }
     .listStyle(.plain)
 }
+

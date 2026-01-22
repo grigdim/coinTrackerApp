@@ -8,7 +8,7 @@
 import Foundation
 
 // Location: Data/DTOs/CoinDetailDTO.swift
-struct CoinDetailDTO: Codable {
+struct CoinDetailDTO: Decodable {
     let id: String
     let symbol: String
     let name: String
@@ -23,13 +23,13 @@ struct CoinDetailDTO: Codable {
         }
 }
 
-struct DescriptionDTO: Codable {
-    let en: String
+struct DescriptionDTO: Decodable {
+    let en: String?
 }
 
-struct LinksDTO: Codable {
-    let homepage: [String]
-    let blockchainSite: [String]
+struct LinksDTO: Decodable {
+    let homepage: [String]?
+    let blockchainSite: [String]?
     let subredditUrl: String?
     
     enum CodingKeys: String, CodingKey {
@@ -40,30 +40,32 @@ struct LinksDTO: Codable {
 
 }
 
-struct ImageDTO: Codable {
-    let thumb, small, large: String
+struct ImageDTO: Decodable {
+    let thumb: String?
+    let small: String?
+    let large: String?
 }
 
-struct MarketDataDTO: Codable {
-    let currentPrice: [String: Double]
-    let marketCap: [String: Double]
-    let totalVolume: [String: Double]
-    let circulatingSupply: Double
+struct MarketDataDTO: Decodable {
+    let currentPrice: [String: Double]?
+    let marketCap: [String: Double]?
+    let totalVolume: [String: Double]?
+    let circulatingSupply: Double?
     let totalSupply: Double?
     let maxSupply: Double?
     
     
     
     // All-Time High/Low
-    let ath: [String: Double]
-    let atl: [String: Double]
+    let ath: [String: Double]?
+    let atl: [String: Double]?
     
     // Price Change Statistics
-    let priceChange24h: Double
-    let priceChangePercentage24h: Double
-    let priceChangePercentage7d: Double
-    let priceChangePercentage30d: Double
-    let priceChangePercentage1y: Double
+    let priceChange24h: Double?
+    let priceChangePercentage24h: Double?
+    let priceChangePercentage7d: Double?
+    let priceChangePercentage30d: Double?
+    let priceChangePercentage1y: Double?
     
     enum CodingKeys: String, CodingKey {
             case currentPrice = "current_price"

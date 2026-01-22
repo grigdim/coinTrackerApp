@@ -110,17 +110,18 @@ final class MarketOverviewViewModel: ObservableObject {
                 symbol: "TOP\(i)",
                 iconURL: nil,
                 price: "\(100 + i)",
+                change24h: "+\(10 + i)",
+                isUp: true,
                 marketCap: "\(1_000_000 + i * 10_000)",
                 volume: "\(50_000 + i * 1_000)",
                 circulatingSupply: "\(1_000_000 + i * 5_000)",
                 ath: "\(200 + i)",
                 atl: "\(10 + i)",
-                change24h: "+\(10 + i)",
-                isUp: true,
                 sparkline: [10.0, 14.5, 12.8, 18.2, 16.9, 22.4, 20.7, 26.0],
                 description: "asdf",
                 websiteURL: URL(string: "https://www.google.com"),
-                explorerURL: nil
+                explorerURL: nil,
+                subredditURL: nil
             )
         }
 
@@ -154,19 +155,21 @@ final class MarketOverviewViewModel: ObservableObject {
                     symbol: "TOP\($0)",
                     iconURL: nil,
                     price: "\(100 + $0)",
+                    change24h: "+\(10 + $0)",
+                    isUp: true,
                     marketCap: "\(1_000_000 + $0 * 10_000)",
                     volume: "\(50_000 + $0 * 1_000)",
                     circulatingSupply: "\(1_000_000 + $0 * 5_000)",
                     ath: "\(200 + $0)",
                     atl: "\(10 + $0)",
-                    change24h: "+\(10 + $0)",
-                    isUp: true,
                     sparkline: [10.0, 14.5, 12.8, 18.2, 16.9, 22.4, 20.7, 26.0],
                     description: "asdf",
                     websiteURL: URL(string: "https://www.google.com"),
-                    explorerURL: nil
+                    explorerURL: nil,
+                    subredditURL: nil
                 )
             }
+
         case .trending:
             return (1...20).map {
                 CoinDetails(
@@ -175,19 +178,21 @@ final class MarketOverviewViewModel: ObservableObject {
                     symbol: "TREND\($0)",
                     iconURL: nil,
                     price: "\(100 + $0)",
+                    change24h: "+\(10 + $0)",
+                    isUp: true,
                     marketCap: "\(1_000_000 + $0 * 10_000)",
                     volume: "\(50_000 + $0 * 1_000)",
                     circulatingSupply: "\(1_000_000 + $0 * 5_000)",
                     ath: "\(200 + $0)",
                     atl: "\(10 + $0)",
-                    change24h: "+\(10 + $0)",
-                    isUp: true,
                     sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
                     description: "asdf",
                     websiteURL: URL(string: "https://www.google.com"),
-                    explorerURL: nil
+                    explorerURL: nil,
+                    subredditURL: nil
                 )
             }
+
         case .gainers:
             return (1...20).map {
                 CoinDetails(
@@ -196,19 +201,21 @@ final class MarketOverviewViewModel: ObservableObject {
                     symbol: "GAIN\($0)",
                     iconURL: nil,
                     price: "\(100 + $0)",
+                    change24h: "+\(10 + $0)",
+                    isUp: true,
                     marketCap: "\(1_000_000 + $0 * 10_000)",
                     volume: "\(50_000 + $0 * 1_000)",
                     circulatingSupply: "\(1_000_000 + $0 * 5_000)",
                     ath: "\(200 + $0)",
                     atl: "\(10 + $0)",
-                    change24h: "+\(10 + $0)",
-                    isUp: true,
                     sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
                     description: "asdf",
                     websiteURL: URL(string: "https://www.google.com"),
-                    explorerURL: nil
+                    explorerURL: nil,
+                    subredditURL: nil
                 )
             }
+
         case .losers:
             return (1...20).map {
                 CoinDetails(
@@ -217,19 +224,21 @@ final class MarketOverviewViewModel: ObservableObject {
                     symbol: "LOSE\($0)",
                     iconURL: nil,
                     price: "\(100 + $0)",
+                    change24h: "-\(10 + $0)",
+                    isUp: false,
                     marketCap: "\(1_000_000 + $0 * 10_000)",
                     volume: "\(50_000 + $0 * 1_000)",
                     circulatingSupply: "\(1_000_000 + $0 * 5_000)",
                     ath: "\(200 + $0)",
                     atl: "\(10 + $0)",
-                    change24h: "-\(10 + $0)",
-                    isUp: false,
                     sparkline: [26.0, 22.1, 24.3, 19.5, 21.0, 16.4, 18.2, 12.0],
                     description: "asdf",
                     websiteURL: URL(string: "https://www.google.com"),
-                    explorerURL: nil
+                    explorerURL: nil,
+                    subredditURL: nil
                 )
             }
         }
     }
 }
+

@@ -22,62 +22,81 @@ enum ChartRange: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-// TEMP: UI scaffold mock, will be replaced by real domain model
 struct CoinDetails: Identifiable, Hashable {
     let id: String
     let name: String
     let symbol: String
+
+    // Images
     let iconURL: URL?
+
+    // Price info (already formatted for UI)
     let price: String
+    let change24h: String
+    let isUp: Bool
+
+    // Market stats
     let marketCap: String
     let volume: String
     let circulatingSupply: String
     let ath: String
     let atl: String
-    let change24h: String
-    let isUp: Bool
-    let sparkline: [Double]
+
+    // Chart
+    let sparkline: [Double]   // from history endpoint
+
+    // About
     let description: String?
+
+    // Links (UI-friendly)
     let websiteURL: URL?
     let explorerURL: URL?
+    let subredditURL: URL?
 }
 
 private let mockCoin =
-    CoinDetails(
-        id: "bitcoin",
-        name: "Bitcoin",
-        symbol: "BTC",
-        iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
-        price: "$42,350.12",
-        marketCap: "$830B",
-        volume: "$18.4B",
-        circulatingSupply: "19.6M BTC",
-        ath: "$69,000",
-        atl: "$67,000",
-        change24h: "+3.42%",
-        isUp: true,
-        sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
-        description: """
-        Bitcoin is a decentralized digital currency that operates without a central authority or intermediary. 
-        It enables peer-to-peer transactions secured by cryptography and recorded on a public, immutable ledger 
-        known as the blockchain.
+CoinDetails(
+    id: "bitcoin",
+    name: "Bitcoin",
+    symbol: "BTC",
+    iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
+    price: "$42,350.12",
+    change24h: "+3.42%",
+    isUp: true,
+    marketCap: "$830B",
+    volume: "$18.4B",
+    circulatingSupply: "19.6M BTC",
+    ath: "$69,000",
+    atl: "$67,000",
+    sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
+    description: """
+    Bitcoin is a decentralized digital currency that operates without a central authority or intermediary. 
+    It enables peer-to-peer transactions secured by cryptography and recorded on a public, immutable ledger 
+    known as the blockchain.
 
-        Created in 2009, Bitcoin introduced the concept of scarce digital money and remains the largest and most 
-        widely adopted cryptocurrency by market capitalization.
-        """,
-        websiteURL: URL(string: "https://bitcoin.org"),
-        explorerURL: nil
-    )
+    Created in 2009, Bitcoin introduced the concept of scarce digital money and remains the largest and most 
+    widely adopted cryptocurrency by market capitalization.
+    """,
+    websiteURL: URL(string: "https://bitcoin.org"),
+    explorerURL: nil,
+    subredditURL: nil
+)
 
 struct CoinDetailsView: View {
-    @StateObject private var viewModel = CoinDetailsViewModel()
+    @StateObject private var viewModel: CoinDetailsViewModel
+    let route: CoinDetailsRoute
 
     @State private var selectedChartRange: ChartRange = .day
     @State private var isFavorite: Bool = false
-    
-    private let route: CoinDetailsRoute
+
     
     init(route: CoinDetailsRoute) {
+        let apiClient = MockApiClient()
+        let repository = CoinRepositoryImpl(apiClient: apiClient)
+        let useCase = GetCoinDetailUseCaseImpl(repository: repository)
+        _viewModel = StateObject(
+            wrappedValue: CoinDetailsViewModel(getCoinDetail: useCase)
+        )
         self.route = route
     }
     
@@ -103,7 +122,7 @@ struct CoinDetailsView: View {
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: selectedChartRange) { newValue in
-                    viewModel.load(for: selectedChartRange)
+                    viewModel.loadChart(chartRange: newValue)
                 }
                 
                 Text("Price Chart")
@@ -184,7 +203,13 @@ struct CoinDetailsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Links")
                 .font(.headline)
-            LinkRowView(title:"Website:", url: coin.websiteURL)
+
+            if let website = coin.websiteURL {
+                LinkRowView(title: "Website:", url: website)
+            } else {
+                LinkRowView(title: "Website:", url: nil)
+            }
+
             LinkRowView(title:"Explorer:", url: coin.explorerURL)
         }
         .padding()
@@ -200,3 +225,4 @@ struct CoinDetailsView: View {
         ))
     }
 }
+

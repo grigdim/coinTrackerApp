@@ -10,13 +10,25 @@ import Combine
 
 @MainActor
 final class CoinDetailsViewModel: ObservableObject {
-    // Published UI state must live inside the class
-    @Published private(set) var state: ViewState<ChartRange> = .idle
-    private(set) var activeChartRange: ChartRange = .day
+    @Published private(set) var state: ViewState<CoinDetails> = .idle
+    private var activeChartRange: ChartRange = .day
+    private let getCoinDetail: GetCoinDetailUseCase
 
-    func load(for selectedChartRange: ChartRange) {
-        activeChartRange = selectedChartRange
-        // Update state as needed for the selected range
-        // e.g., state = .loading or trigger a fetch
+    init(getCoinDetail: GetCoinDetailUseCase) {
+        self.getCoinDetail = getCoinDetail
+    }
+
+    func load(id: String) async {
+        state = .loading
+        do {
+            let coin = try await getCoinDetail.execute(id: id)
+            state = .loaded(coin)
+        } catch {
+            state = .failed(error)
+        }
+    }
+    
+    func loadChart(chartRange: ChartRange) {
+        activeChartRange = chartRange
     }
 }
