@@ -37,7 +37,7 @@ struct RootTabView: View {
 
             // MARK watchlists path
             NavigationStack(path: $watchlistsPath) {
-                WatchlistsView()
+                WatchlistView()
                     .navigationTitle("Watchlists")
                     .navigationBarTitleDisplayMode(.large)
             }
