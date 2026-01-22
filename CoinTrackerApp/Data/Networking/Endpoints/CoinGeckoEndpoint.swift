@@ -43,6 +43,15 @@ enum CoinGeckoEndpoint {
                 URLQueryItem(name: "vs_currency", value: "usd"),
                 URLQueryItem(name: "days", value: days)
             ]
+        case .coinDetail:
+            return [
+                URLQueryItem(name: "localization", value: "false"),
+                URLQueryItem(name: "tickers", value: "false"),
+                URLQueryItem(name: "market_data", value: "true"),
+                URLQueryItem(name: "community_data", value: "false"),
+                URLQueryItem(name: "developer_data", value: "false"),
+                URLQueryItem(name: "sparkline", value: "false")
+            ]
         case .search(let query):
             return [URLQueryItem(name: "query", value: query)]
         default:
