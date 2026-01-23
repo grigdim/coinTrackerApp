@@ -7,9 +7,8 @@
 
 import Foundation
 
-
 enum CoinGeckoEndpoint {
-    case markets(currency: String, perPage: Int, page: Int)
+    case markets(perPage: Int, page: Int)
     case trending
     case coinDetail(id: String)
     case history(id: String, days: String)
@@ -19,29 +18,29 @@ enum CoinGeckoEndpoint {
 
     var path: String {
         switch self {
-        case .markets: return "/coins/markets" //done
-        case .trending: return "/search/trending" //done
-        case .coinDetail(let id): return "/coins/\(id)" //done
-        case .history(let id, _): return "/coins/\(id)/market_chart" //done
-        case .search: return "/search" //search is used for multiple cases, such as trending
+        case .markets: return "/coins/markets"
+        case .trending: return "/search/trending"
+        case .coinDetail(let id): return "/coins/\(id)"
+        case .history(let id, _): return "/coins/\(id)/market_chart"
+        case .search: return "/search"  //search is used for multiple cases, such as trending
         }
     }
 
     var queryItems: [URLQueryItem] {
         switch self {
-        case .markets(let currency, let perPage, let page):
+        case .markets(let perPage, let page):
             return [
-                URLQueryItem(name: "vs_currency", value: currency),
-                URLQueryItem(name: "order", value: "market_cap_desc"),
+                URLQueryItem(name: "vs_currency", value: "usd"),
                 URLQueryItem(name: "per_page", value: "\(perPage)"),
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "sparkline", value: "true"),
-                URLQueryItem(name: "price_change_percentage", value: "24h")
+                URLQueryItem(name: "price_change_percentage", value: "24h"),
             ]
         case .history(_, let days):
             return [
                 URLQueryItem(name: "vs_currency", value: "usd"),
-                URLQueryItem(name: "days", value: days)
+                URLQueryItem(name: "days", value: days),
+                URLQueryItem(name: "precision", value: "full"),
             ]
         case .coinDetail:
             return [
@@ -50,11 +49,11 @@ enum CoinGeckoEndpoint {
                 URLQueryItem(name: "market_data", value: "true"),
                 URLQueryItem(name: "community_data", value: "false"),
                 URLQueryItem(name: "developer_data", value: "false"),
-                URLQueryItem(name: "sparkline", value: "false")
+                URLQueryItem(name: "sparkline", value: "false"),
             ]
         case .search(let query):
             return [URLQueryItem(name: "query", value: query)]
-        default:
+        case .trending:
             return []
         }
     }

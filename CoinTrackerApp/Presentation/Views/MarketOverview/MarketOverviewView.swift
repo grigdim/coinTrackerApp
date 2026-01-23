@@ -5,7 +5,7 @@ enum MarketCategory: String, CaseIterable, Identifiable {
     case trending = "Trending"
     case gainers = "Gainers"
     case losers = "Losers"
-    
+
     var id: String { rawValue }
 }
 
@@ -29,13 +29,22 @@ private struct MarketOverviewNoSearchResultsView: View {
 }
 
 struct MarketOverviewView: View {
-    @StateObject private var viewModel = MarketOverviewViewModel()
+    @StateObject private var viewModel: MarketOverviewViewModel
     @State private var selectedCategory: MarketCategory = .top100
     @State private var searchText: String = ""
     @State private var isSwitchingCategory: Bool = false
     @State private var latestOffsets: [String: CGFloat] = [:]
     @State private var switchTask: Task<Void, Never>?
     @State private var displayedCategory: MarketCategory = .top100
+
+    init() {
+        let apiClient = APIClient()
+        let repo = MarketRowRepositoryImpl(apiClient: apiClient)
+        let useCase = GetMarketRowsUseCaseImpl(repository: repo)
+        _viewModel = StateObject(
+            wrappedValue: MarketOverviewViewModel(getMarketRows: useCase)
+        )
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,27 +62,23 @@ struct MarketOverviewView: View {
         }
         .task {
             displayedCategory = selectedCategory
-            await viewModel.load(for: selectedCategory)
+            await viewModel.loadMarketRows(for: selectedCategory)
         }
         .navigationDestination(for: CoinDetailsRoute.self) { route in
-            let apiClient = MockApiClient()
-            let repo = CoinRepositoryImpl(apiClient: apiClient)
-            let useCase = GetCoinDetailUseCaseImpl(repository: repo)
-            let vm = CoinDetailsViewModel(getCoinDetail: useCase)
-
             CoinDetailsView(route: route)
         }
     }
 
     private var contentList: some View {
         // Resolve coins for the list without removing the list from the hierarchy.
-        let coins: [CoinDetails] = {
+        let coins: [MarketRow] = {
             if case .loaded(let c) = viewModel.state { return c }
             return []
         }()
 
         let filtered = coins.filter {
-            searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
+            searchText.isEmpty
+                || $0.name.localizedCaseInsensitiveContains(searchText)
         }
 
         let shouldPaginate = selectedCategory == .top100 && searchText.isEmpty
@@ -81,85 +86,17 @@ struct MarketOverviewView: View {
 
         return ScrollViewReader { proxy in
             List {
-                // Loading / error as list rows (simple approach).
-                // If you prefer overlays, you can do that too.
-                switch viewModel.state {
-                case .idle, .loading:
-                    HStack {
-                        Spacer()
-                        ProgressView("Loading…")
-                        Spacer()
-                    }
-                    .listRowSeparator(.hidden)
-
-                case .failed(let error):
-                    VStack(spacing: 12) {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 40))
-                            .foregroundColor(.orange)
-
-                        Text("Couldn’t load markets").font(.headline)
-                        Text(error.localizedDescription)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-
-                        Button("Retry") {
-                            Task { await viewModel.refresh(for: selectedCategory) }
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .listRowSeparator(.hidden)
-
-                case .loaded:
-                    // Main rows
-                    ForEach(Array(filtered.enumerated()), id: \.element.id) { index, coin in
-                        NavigationLink(
-                            value: CoinDetailsRoute(
-                                id: coin.id,
-                                name: coin.name,
-                                iconURL: coin.iconURL
-                            )
-                        ){
-                            CoinRowView(coin: coin)
-                                .onAppear {
-                                    guard shouldPaginate else { return }
-                                    guard !isSwitchingCategory else { return }
-                                    
-                                    if index >= thresholdIndex {
-                                        let category = selectedCategory
-                                        guard category == .top100 else { return }
-                                        Task { await viewModel.loadNextPage(for: category) }
-                                    }
-                                }
-                                .background(
-                                    GeometryReader { geo in
-                                        Color.clear.preference(
-                                            key: RowOffsetKey.self,
-                                            value: [coin.id: geo.frame(in: .named("marketScrolled")).minY]
-                                        )
-                                    }
-                                )
-                        }
-                        // Important for scrollTo:
-                        .id(coin.id)
-                    }
-
-                    // Footer loading indicator
-                    if shouldPaginate && viewModel.isLoadingNextPage {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Spacer()
-                        }
-                    }
-                }
+                listRows(
+                    shouldPaginate: shouldPaginate,
+                    thresholdIndex: thresholdIndex
+                )
             }
             .listStyle(.plain)
             .coordinateSpace(name: "marketScrolled")
             .searchable(text: $searchText, prompt: "Search coins")
-            .refreshable { await viewModel.refresh(for: selectedCategory) }
+            .refreshable {
+                await viewModel.refreshMarketRows(for: selectedCategory)
+            }
             .overlay {
                 if case .loaded = viewModel.state, filtered.isEmpty {
                     MarketOverviewNoSearchResultsView()
@@ -168,11 +105,14 @@ struct MarketOverviewView: View {
             .onPreferenceChange(RowOffsetKey.self) { offsets in
                 latestOffsets = offsets
                 guard !isSwitchingCategory else { return }
-                
+
                 let visible = offsets.filter { $0.value >= 0 }
                 if let topMost = visible.min(by: { $0.value < $1.value })?.key {
-                    
-                    viewModel.saveScrolledAnchor(for: displayedCategory, id: topMost)
+
+                    viewModel.saveScrolledAnchor(
+                        for: displayedCategory,
+                        id: topMost
+                    )
                 }
             }
             .onChange(of: selectedCategory) { newValue in
@@ -182,8 +122,13 @@ struct MarketOverviewView: View {
                 switchTask = Task {
                     // 1) Save anchor for the category currently displayed BEFORE switching
                     let visible = latestOffsets.filter { $0.value >= 0 }
-                    if let topMost = visible.min(by: { $0.value < $1.value })?.key {
-                        viewModel.saveScrolledAnchor(for: displayedCategory, id: topMost)
+                    if let topMost = visible.min(by: { $0.value < $1.value })?
+                        .key
+                    {
+                        viewModel.saveScrolledAnchor(
+                            for: displayedCategory,
+                            id: topMost
+                        )
                     }
 
                     isSwitchingCategory = true
@@ -196,7 +141,7 @@ struct MarketOverviewView: View {
                     }
 
                     // 2) Load data for the new category
-                    await viewModel.load(for: newValue)
+                    await viewModel.loadMarketRows(for: newValue)
                     guard !Task.isCancelled else { return }
                     guard selectedCategory == newValue else { return }
 
@@ -210,12 +155,106 @@ struct MarketOverviewView: View {
                     // 5) Restore anchor or fallback to first row (Fix A)
                     if let anchor = viewModel.scrollToAnchor(for: newValue) {
                         proxy.scrollTo(anchor, anchor: .top)
-                    } else if case .loaded(let coins) = viewModel.state, let firstId = coins.first?.id {
+                    } else if case .loaded(let coins) = viewModel.state,
+                        let firstId = coins.first?.id
+                    {
                         proxy.scrollTo(firstId, anchor: .top)
                     }
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func listRows(shouldPaginate: Bool, thresholdIndex: Int)
+        -> some View
+    {
+        switch viewModel.state {
+        case .idle, .loading:
+            HStack {
+                Spacer()
+                ProgressView("Loading…")
+                Spacer()
+            }
+            .listRowSeparator(.hidden)
+
+        case .failed(let error):
+            VStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 40))
+                    .foregroundColor(.orange)
+
+                Text("Couldn’t load markets").font(.headline)
+                Text(error.localizedDescription)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+
+                Button("Retry") {
+                    Task {
+                        await viewModel.refreshMarketRows(for: selectedCategory)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .listRowSeparator(.hidden)
+
+        case .loaded(let coins):
+            let filtered = coins.filter {
+                searchText.isEmpty
+                    || $0.name.localizedCaseInsensitiveContains(searchText)
+            }
+
+            ForEach(Array(filtered.enumerated()), id: \.element.id) {
+                index,
+                coin in
+                marketRow(
+                    coin: coin,
+                    index: index,
+                    thresholdIndex: thresholdIndex,
+                    shouldPaginate: shouldPaginate
+                )
+            }
+
+            if shouldPaginate && viewModel.isLoadingNextPage {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func marketRow(
+        coin: MarketRow,
+        index: Int,
+        thresholdIndex: Int,
+        shouldPaginate: Bool
+    ) -> some View {
+        NavigationLink(
+            value: CoinDetailsRoute(
+                id: coin.id,
+                name: coin.name,
+                iconURL: coin.iconURL
+            )
+        ) {
+            CoinRowView(coin: coin)
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.preference(
+                            key: RowOffsetKey.self,
+                            value: [
+                                coin.id: geo.frame(in: .named("marketScrolled"))
+                                    .minY
+                            ]
+                        )
+                    }
+                )
+        }
+        .id(coin.id)
     }
 }
 

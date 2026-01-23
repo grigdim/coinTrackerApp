@@ -7,18 +7,18 @@
 
 import Foundation
 
-protocol GetCoinDetailUseCase {
-    func execute(id: String) async throws -> CoinDetails
+protocol GetCoinDetailsUseCase {
+    func execute(for id: String) async throws -> CoinDetails
 }
 
-final class GetCoinDetailUseCaseImpl: GetCoinDetailUseCase {
+final class GetCoinDetailsUseCaseImpl: GetCoinDetailsUseCase {
     private let repository: CoinRepository
 
     init(repository: CoinRepository) {
         self.repository = repository
     }
 
-    func execute(id: String) async throws -> CoinDetails {
-        try await repository.fetchCoinDetailsById(id)
+    func execute(for id: String) async throws -> CoinDetails {
+        try await repository.fetchCoinDetailsById(for: id)
     }
 }

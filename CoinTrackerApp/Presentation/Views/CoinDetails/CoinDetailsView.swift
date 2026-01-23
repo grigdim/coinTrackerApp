@@ -13,75 +13,6 @@ struct CoinDetailsRoute: Hashable {
     let iconURL: URL?
 }
 
-enum ChartRange: String, CaseIterable, Identifiable {
-    case day = "24H"
-    case week = "7D"
-    case month = "1M"
-    case year = "1Y"
-    
-    var id: String { self.rawValue }
-}
-
-struct CoinDetails: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let symbol: String
-
-    // Images
-    let iconURL: URL?
-
-    // Price info (already formatted for UI)
-    let price: String
-    let change24h: String
-    let isUp: Bool
-
-    // Market stats
-    let marketCap: String
-    let volume: String
-    let circulatingSupply: String
-    let ath: String
-    let atl: String
-
-    // Chart
-    let sparkline: [Double]   // from history endpoint
-
-    // About
-    let description: String?
-
-    // Links (UI-friendly)
-    let websiteURL: URL?
-    let explorerURL: URL?
-    let subredditURL: URL?
-}
-
-private let mockCoin =
-CoinDetails(
-    id: "bitcoin",
-    name: "Bitcoin",
-    symbol: "BTC",
-    iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
-    price: "$42,350.12",
-    change24h: "+3.42%",
-    isUp: true,
-    marketCap: "$830B",
-    volume: "$18.4B",
-    circulatingSupply: "19.6M BTC",
-    ath: "$69,000",
-    atl: "$67,000",
-    sparkline: [1.0, 2.5, 3.14, 4.0, 5.6, 6.7, 7.8, 8.9],
-    description: """
-    Bitcoin is a decentralized digital currency that operates without a central authority or intermediary. 
-    It enables peer-to-peer transactions secured by cryptography and recorded on a public, immutable ledger 
-    known as the blockchain.
-
-    Created in 2009, Bitcoin introduced the concept of scarce digital money and remains the largest and most 
-    widely adopted cryptocurrency by market capitalization.
-    """,
-    websiteURL: URL(string: "https://bitcoin.org"),
-    explorerURL: nil,
-    subredditURL: nil
-)
-
 struct CoinDetailsView: View {
     @StateObject private var viewModel: CoinDetailsViewModel
     let route: CoinDetailsRoute
@@ -89,54 +20,64 @@ struct CoinDetailsView: View {
     @State private var selectedChartRange: ChartRange = .day
     @State private var isFavorite: Bool = false
 
-    
     init(route: CoinDetailsRoute) {
-        let apiClient = MockApiClient()
+        let apiClient = APIClient()
         let repository = CoinRepositoryImpl(apiClient: apiClient)
-        let useCase = GetCoinDetailUseCaseImpl(repository: repository)
+        let useCase = GetCoinDetailsUseCaseImpl(repository: repository)
         _viewModel = StateObject(
-            wrappedValue: CoinDetailsViewModel(getCoinDetail: useCase)
+            wrappedValue: CoinDetailsViewModel(getCoinDetails: useCase)
         )
         self.route = route
     }
-    
-    private let coin = mockCoin
-    
+
     private let gridColumns: [GridItem] = [
         GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
+        GridItem(.flexible(), spacing: 12),
     ]
-    
-    
+
     var body: some View {
         ScrollView {
-            VStack {
-                priceHeader
-                
-                statsGrid
-                
-                Picker("SelectedChartRange", selection: $selectedChartRange) {
-                    ForEach(ChartRange.allCases) { chartRange in
-                        Text(chartRange.rawValue).tag(chartRange)
+            switch viewModel.state {
+            case .idle, .loading:
+                HStack {
+                    Spacer()
+                    ProgressView("Loading…")
+                    Spacer()
+                }
+            case .failed(let error):
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 40))
+                        .foregroundColor(.orange)
+
+                    Text("Couldn’t load markets").font(.headline)
+                    Text(error.localizedDescription)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button("Retry") {
+                        Task {
+                            await viewModel.refreshCoinDetails(for: route.id)
+                        }
                     }
                 }
-                .pickerStyle(.segmented)
-                .onChange(of: selectedChartRange) { newValue in
-                    viewModel.loadChart(chartRange: newValue)
-                }
-                
-                Text("Price Chart")
-                    .font(.headline)
-                    .padding(.vertical, 4)
-                PriceChartView()
-                
-                ExpandableTextView (name: coin.name, description: coin.description)
-
-                linksSection
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .listRowSeparator(.hidden)
+            case .loaded(let viewData):
+                contentView(for: viewData)
             }
+
         }
         .padding(.horizontal)
         .padding(.top, 8)
+        .task(id: route.id) {
+            await viewModel.loadCoinDetails(for: route.id)
+        }
+        .refreshable {
+            await viewModel.refreshCoinDetails(for: route.id)
+        }
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 8) {
@@ -156,10 +97,10 @@ struct CoinDetailsView: View {
                         .font(.headline)
                 }
             }
-            
+
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    withAnimation (.easeInOut) {
+                    withAnimation(.easeInOut) {
                         isFavorite.toggle()
                     }
                 } label: {
@@ -171,58 +112,90 @@ struct CoinDetailsView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
     }
-        
-    private var statsGrid: some View {
-        LazyVGrid(columns: gridColumns, spacing: 12) {
-            StatCardView(title: "Market Cap", value: coin.marketCap)
-            StatCardView(title: "Volume", value: coin.volume)
-            StatCardView(title: "ATH", value: coin.ath)
-            StatCardView(title: "ATL", value: coin.atl)
+
+    private func contentView(for coinDetails: CoinDetails) -> some View {
+        VStack (spacing: 16) {
+            PriceHeaderView(coin: coinDetails)
+
+            StatsGridView(coin: coinDetails)
+
+            PriceChartView(coinId: coinDetails.id)
+
+            ExpandableTextView(
+                title: coinDetails.name,
+                description: coinDetails.description
+            )
+
+            LinksSectionView(coin: coinDetails)
         }
     }
-    
-    private var priceHeader: some View {
-        VStack(spacing: 6) {
-            Text(coin.price)
-                .font(.largeTitle)
-                .fontWeight(.bold)
 
-            HStack(spacing: 8) {
-                Text(coin.symbol)
-                    .foregroundColor(.secondary)
+    private struct PriceHeaderView: View {
+        let coin: CoinDetails
 
-                Text(coin.change24h)
-                    .foregroundColor(coin.isUp ? .green : .red)
+        var body: some View {
+            VStack(spacing: 6) {
+                Text(coin.price)
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+
+                HStack(spacing: 8) {
+                    Text(coin.symbol)
+                        .foregroundColor(.secondary)
+
+                    Text(coin.change24h)
+                        .foregroundColor(coin.isUp ? .green : .red)
+                }
+                .font(.title3)
             }
-            .font(.title3)
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
     }
-    
-    private var linksSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Links")
-                .font(.headline)
 
-            if let website = coin.websiteURL {
-                LinkRowView(title: "Website:", url: website)
-            } else {
-                LinkRowView(title: "Website:", url: nil)
+    private struct StatsGridView: View {
+        let coin: CoinDetails
+
+        private let gridColumns: [GridItem] = [
+            GridItem(.flexible(), spacing: 12),
+            GridItem(.flexible(), spacing: 12),
+        ]
+
+        var body: some View {
+            LazyVGrid(columns: gridColumns, spacing: 12) {
+                StatCardView(title: "Market Cap", value: coin.marketCap)
+                StatCardView(title: "Volume", value: coin.volume)
+                StatCardView(title: "ATH", value: coin.ath)
+                StatCardView(title: "ATL", value: coin.atl)
             }
-
-            LinkRowView(title:"Explorer:", url: coin.explorerURL)
         }
-        .padding()
+    }
+
+    private struct LinksSectionView: View {
+        let coin: CoinDetails
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Links")
+                    .font(.headline)
+
+                LinkRowView(title: "Website:", url: coin.websiteURL)
+                LinkRowView(title: "Explorer:", url: coin.explorerURL)
+            }
+        }
     }
 }
 
 #Preview {
     NavigationStack {
-        CoinDetailsView(route: .init(
-            id: "bitcoin",
-            name: "Bitcoin",
-            iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png")
-        ))
+        CoinDetailsView(
+            route: .init(
+                id: "bitcoin",
+                name: "Bitcoin",
+                iconURL: URL(
+                    string:
+                        "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"
+                )
+            )
+        )
     }
 }
-
