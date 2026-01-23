@@ -1,7 +1,7 @@
 import Foundation
 
 protocol CoinRepository {
-    func fetchCoinDetailsById(_ id: String) async throws -> CoinDetails
+    func fetchCoinDetailsById(for id: String) async throws -> CoinDetails
 }
 
 final class CoinRepositoryImpl: CoinRepository {
@@ -11,7 +11,7 @@ final class CoinRepositoryImpl: CoinRepository {
         self.apiClient = apiClient
     }
 
-    func fetchCoinDetailsById(_ id: String) async throws -> CoinDetails {
+    func fetchCoinDetailsById(for id: String) async throws -> CoinDetails {
         let endpoint = CoinGeckoEndpoint.coinDetail(id: id)
         let dto: CoinDetailDTO = try await apiClient.request(endpoint: endpoint)
         return CoinDetailsMapper.map(dto: dto)

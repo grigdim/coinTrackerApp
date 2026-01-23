@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-struct StatCardViewMockModel {
-    let title: String
-    let value: String
-}
-
 struct StatCardView: View {
     let title: String
     let value: String
