@@ -36,11 +36,11 @@ struct RootTabView: View {
             .tag(RootTab.search)
 
             // MARK watchlists path
-            NavigationStack(path: $watchlistsPath) {
-                WatchlistView()
-                    .navigationTitle("Watchlists")
-                    .navigationBarTitleDisplayMode(.large)
-            }
+//            NavigationStack(path: $watchlistsPath) {
+//                WatchlistView()
+//                    .navigationTitle("Watchlists")
+//                    .navigationBarTitleDisplayMode(.large)
+//            }
             .tabItem {
                 Label(RootTab.watchlists.title, systemImage: RootTab.watchlists.systemImage)
             }

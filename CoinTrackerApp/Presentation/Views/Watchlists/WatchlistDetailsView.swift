@@ -18,43 +18,47 @@ struct WatchlistDetailView: View {
                 EmptyStateView()
             } else {
                 List {
-                    ForEach(watchlist.coins) { coin in
-                        CoinRowView(coin: coin)
+                    ForEach(watchlist.coins) { coinDetail in
+                        CoinRowView(coin: coinDetail.toMarketRow)
                             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                             .listRowSeparator(.hidden)
-                            
-                            // Swipe to Add to Portfolio
                             .swipeActions(edge: .leading) {
                                 Button {
-                                    print("Added \(coin.name) to portfolio")
+                                    print("Portfolio: \(coinDetail.name)")
                                 } label: {
                                     Label("Portfolio", systemImage: "case.fill")
                                 }
                                 .tint(.blue)
                             }
-                            
-                            // Swipe to Remove Coin from this specific watchlist
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
-                                    print("Removed \(coin.name)")
+                                    print("Delete: \(coinDetail.name)")
                                 } label: {
                                     Label("Remove", systemImage: "trash")
                                 }
                             }
+                            .background(
+                                NavigationLink("", value: coinDetail)
+                                    .opacity(0)
+                            )
                     }
                 }
                 .listStyle(.plain)
             }
         }
         .navigationTitle(watchlist.name)
+        .navigationDestination(for: CoinDetails.self) { coin in
+            Text("Detail Screen for \(coin.name)") // Place your CoinDetailView here
+        }
     }
 }
-
-
-
-
-#Preview {
-    NavigationStack {
-        WatchlistDetailView(watchlist: Watchlist.mocks()[0])
+    
+    
+    
+    
+    #Preview {
+        NavigationStack {
+            WatchlistDetailView(watchlist: Watchlist.mocks()[0])
+        }
     }
-}
+
