@@ -11,20 +11,21 @@ import Combine
 class WatchlistsViewModel: ObservableObject {
     @Published var watchlists: [Watchlist] = []
     
-    init() {
-        // Load initial mock data
+    init() {}
+    
+    func loadData() {
+        guard watchlists.isEmpty else { return }
+        
         self.watchlists = Watchlist.mocks()
     }
     
-    // MARK: - Intents
+    // MARK: - Watchlist Management
     
-    // Reorders the watchlists
-    func moveWatchlist(from source: IndexSet, to destination: Int) {
-        watchlists.move(fromOffsets: source, toOffset: destination)
-    }
-    
-    // Deletes a watchlist
     func deleteWatchlist(at offsets: IndexSet) {
         watchlists.remove(atOffsets: offsets)
+    }
+    
+    func moveWatchlist(from source: IndexSet, to destination: Int) {
+        watchlists.move(fromOffsets: source, toOffset: destination)
     }
 }
