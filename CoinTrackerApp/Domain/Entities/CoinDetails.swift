@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct CoinDetails: Identifiable, Hashable {
+struct CoinDetails: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let symbol: String
@@ -37,4 +37,31 @@ struct CoinDetails: Identifiable, Hashable {
     let websiteURL: URL?
     let explorerURL: URL?
     let subredditURL: URL?
+    
+    var toMarketRow: MarketRow {
+            MarketRow(
+                id: id,
+                name: name,
+                symbol: symbol,
+                iconURL: iconURL,
+                price: price,
+                marketCap: marketCap,
+                volume: volume,
+                circulatingSupply: circulatingSupply,
+                ath: ath,
+                atl: atl,
+                change24h: change24h,
+                change24hRaw: 0.0, // Default or parse from string if needed
+                isUp: isUp,
+                sparkline: sparkline
+            )
+        }
+    // MARK: - Hashable
+        static func == (lhs: CoinDetails, rhs: CoinDetails) -> Bool {
+            lhs.id == rhs.id
+        }
+        
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
 }
