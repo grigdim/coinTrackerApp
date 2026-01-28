@@ -1,16 +1,14 @@
-import SwiftUI
-
 //
 //  WatchlistDetailView.swift
 //  CoinTrackerApp
 //
-//  Created by [Your Name]
+//  Created by Dim Grigoriadis on 15/1/26.
 //
 
 import SwiftUI
 
 struct WatchlistDetailView: View {
-    let watchlist: Watchlist
+    @Binding var watchlist: Watchlist
     
     var body: some View {
         Group {
@@ -22,6 +20,8 @@ struct WatchlistDetailView: View {
                         CoinRowView(coin: coinDetail.toMarketRow)
                             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                             .listRowSeparator(.hidden)
+                            
+                            // Swipe Leading: Portfolio
                             .swipeActions(edge: .leading) {
                                 Button {
                                     print("Portfolio: \(coinDetail.name)")
@@ -30,13 +30,16 @@ struct WatchlistDetailView: View {
                                 }
                                 .tint(.blue)
                             }
+                            
+                            // Swipe Trailing: Delete
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
-                                    print("Delete: \(coinDetail.name)")
+                                    deleteCoin(coinDetail)
                                 } label: {
                                     Label("Remove", systemImage: "trash")
                                 }
                             }
+                            // Navigation Link (Invisible)
                             .background(
                                 NavigationLink("", value: coinDetail)
                                     .opacity(0)
@@ -48,17 +51,27 @@ struct WatchlistDetailView: View {
         }
         .navigationTitle(watchlist.name)
         .navigationDestination(for: CoinDetails.self) { coin in
-            Text("Detail Screen for \(coin.name)") // Place your CoinDetailView here
+            // Map 'CoinDetails' -> 'CoinDetailsRoute'
+            CoinDetailsView(
+                route: CoinDetailsRoute(
+                    id: coin.id,
+                    name: coin.name,
+                    iconURL: coin.iconURL
+                )
+            )
+        }
+    }
+    
+    private func deleteCoin(_ coin: CoinDetails) {
+        if let index = watchlist.coins.firstIndex(where: { $0.id == coin.id }) {
+            watchlist.coins.remove(at: index)
         }
     }
 }
-    
-    
-    
-    
-    #Preview {
-        NavigationStack {
-            WatchlistDetailView(watchlist: Watchlist.mocks()[0])
-        }
-    }
 
+// Helper for the preview
+#Preview {
+    NavigationStack {
+        WatchlistDetailView(watchlist: .constant(Watchlist.mocks()[0]))
+    }
+}

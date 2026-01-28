@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Watchlist: Identifiable, Hashable {
+struct Watchlist: Identifiable, Hashable, Codable {
     let id: UUID
     var name: String
     var icon: String
@@ -23,7 +23,7 @@ struct Watchlist: Identifiable, Hashable {
             return [
                 Watchlist(id: uuid1, name: "My Favorites", icon: "star.fill", coins: [
                     CoinDetails(
-                        id: "btc", name: "Bitcoin", symbol: "BTC",
+                        id: "bitcoin", name: "Bitcoin", symbol: "BTC",
                         iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"),
                         price: "$43,210.12", change24h: "+2.45%", isUp: true,
                         marketCap: "$850B", volume: "$25B", circulatingSupply: "19M",

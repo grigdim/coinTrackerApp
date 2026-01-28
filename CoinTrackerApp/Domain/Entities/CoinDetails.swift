@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct CoinDetails: Identifiable, Hashable {
+struct CoinDetails: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let symbol: String
@@ -55,5 +55,13 @@ struct CoinDetails: Identifiable, Hashable {
                 isUp: isUp,
                 sparkline: sparkline
             )
+        }
+    // MARK: - Hashable
+        static func == (lhs: CoinDetails, rhs: CoinDetails) -> Bool {
+            lhs.id == rhs.id
+        }
+        
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
         }
 }

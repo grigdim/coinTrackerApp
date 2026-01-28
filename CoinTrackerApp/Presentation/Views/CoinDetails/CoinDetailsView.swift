@@ -6,20 +6,31 @@
 //
 
 import SwiftUI
+import Combine
 
+// MARK: - Route Model
 struct CoinDetailsRoute: Hashable {
     let id: String
     let name: String
     let iconURL: URL?
 }
 
+// MARK: - Main View
 struct CoinDetailsView: View {
+    // 1. Existing ViewModel for API Data
     @StateObject private var viewModel: CoinDetailsViewModel
+    
+    // 2. ViewModel for User Data (Watchlists/Persistence)
+    @StateObject private var watchlistsViewModel = WatchlistsViewModel()
+    
     let route: CoinDetailsRoute
 
     @State private var selectedChartRange: ChartRange = .day
-    @State private var isFavorite: Bool = false
+    
+    // 3. State to control the "Add to Watchlist" sheet
+    @State private var showAddSheet = false
 
+    // Dependency Injection
     init(route: CoinDetailsRoute) {
         let apiClient = APIClient()
         let repository = CoinRepositoryImpl(apiClient: apiClient)
@@ -44,6 +55,8 @@ struct CoinDetailsView: View {
                     ProgressView("Loading…")
                     Spacer()
                 }
+                .padding(.vertical, 50)
+                
             case .failed(let error):
                 VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
@@ -65,15 +78,27 @@ struct CoinDetailsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .listRowSeparator(.hidden)
+                
             case .loaded(let viewData):
+                // 4. Content View
                 contentView(for: viewData)
+                    // 5. Present YOUR existing AddToWatchlistView here
+                    .sheet(isPresented: $showAddSheet) {
+                        AddToWatchlistView(
+                            viewModel: watchlistsViewModel,
+                            coin: viewData
+                        )
+                        .presentationDetents([.medium])
+                    }
             }
-
         }
         .padding(.horizontal)
         .padding(.top, 8)
         .task(id: route.id) {
+            // Load API Data
             await viewModel.loadCoinDetails(for: route.id)
+            // 6. Load User Data (so we know if the heart should be filled)
+            watchlistsViewModel.loadData()
         }
         .refreshable {
             await viewModel.refreshCoinDetails(for: route.id)
@@ -98,16 +123,20 @@ struct CoinDetailsView: View {
                 }
             }
 
+            // 7. Updated Heart Button Logic
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    withAnimation(.easeInOut) {
-                        isFavorite.toggle()
-                    }
+                    showAddSheet = true
                 } label: {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    // Check if coin exists in ANY watchlist to determine icon state
+                    let isSaved = watchlistsViewModel.watchlists.contains { list in
+                        list.coins.contains { $0.id == route.id }
+                    }
+                    
+                    Image(systemName: isSaved ? "heart.fill" : "heart")
                         .symbolRenderingMode(.hierarchical)
+                        .foregroundColor(isSaved ? .red : .primary)
                 }
-                .accessibilityLabel(isFavorite ? "Unfavorite" : "Favorite")
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -130,6 +159,7 @@ struct CoinDetailsView: View {
         }
     }
 
+    // MARK: - Subviews
     private struct PriceHeaderView: View {
         let coin: CoinDetails
 
@@ -185,16 +215,14 @@ struct CoinDetailsView: View {
     }
 }
 
+// MARK: - Preview
 #Preview {
     NavigationStack {
         CoinDetailsView(
             route: .init(
                 id: "bitcoin",
                 name: "Bitcoin",
-                iconURL: URL(
-                    string:
-                        "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"
-                )
+                iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png")
             )
         )
     }
