@@ -20,18 +20,24 @@ struct RootTabView: View {
                     .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
-                Label(RootTab.markets.title, systemImage: RootTab.markets.systemImage)
+                Label(
+                    RootTab.markets.title,
+                    systemImage: RootTab.markets.systemImage
+                )
             }
             .tag(RootTab.markets)
 
             // MARK search path
             NavigationStack(path: $searchPath) {
-                SearchView()
+                SearchView(MarketRow.sampleRows)
                     .navigationTitle("Search")
                     .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
-                Label(RootTab.search.title, systemImage: RootTab.search.systemImage)
+                Label(
+                    RootTab.search.title,
+                    systemImage: RootTab.search.systemImage
+                )
             }
             .tag(RootTab.search)
 
@@ -42,10 +48,13 @@ struct RootTabView: View {
 //                    .navigationBarTitleDisplayMode(.large)
 //            }
             .tabItem {
-                Label(RootTab.watchlists.title, systemImage: RootTab.watchlists.systemImage)
+                Label(
+                    RootTab.watchlists.title,
+                    systemImage: RootTab.watchlists.systemImage
+                )
             }
             .tag(RootTab.watchlists)
-            
+
             // MARK portfolio path
             NavigationStack(path: $portfolioPath) {
                 PortfolioView()
@@ -53,7 +62,10 @@ struct RootTabView: View {
                     .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
-                Label(RootTab.portfolio.title, systemImage: RootTab.portfolio.systemImage)
+                Label(
+                    RootTab.portfolio.title,
+                    systemImage: RootTab.portfolio.systemImage
+                )
             }
             .tag(RootTab.portfolio)
 
@@ -64,7 +76,10 @@ struct RootTabView: View {
                     .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
-                Label(RootTab.alerts.title, systemImage: RootTab.alerts.systemImage)
+                Label(
+                    RootTab.alerts.title,
+                    systemImage: RootTab.alerts.systemImage
+                )
             }
             .tag(RootTab.alerts)
         }
