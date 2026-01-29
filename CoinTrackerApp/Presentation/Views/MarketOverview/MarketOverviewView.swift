@@ -9,24 +9,7 @@ enum MarketCategory: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-private struct MarketOverviewNoSearchResultsView: View {
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary)
 
-            Text("No results")
-                .font(.headline)
-
-            Text("Try a different search term")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
-    }
-}
 
 struct MarketOverviewView: View {
     @StateObject private var viewModel: MarketOverviewViewModel
@@ -86,20 +69,25 @@ struct MarketOverviewView: View {
 
         return ScrollViewReader { proxy in
             List {
-                listRows(
+                MarketsListView(
+                    state: viewModel.state,
+                    searchText: searchText,
                     shouldPaginate: shouldPaginate,
-                    thresholdIndex: thresholdIndex
+                    thresholdIndex: thresholdIndex,
+                    onRetry: {
+                        Task { await viewModel.refreshMarketRows(for: selectedCategory) }
+                    }
                 )
             }
             .listStyle(.plain)
             .coordinateSpace(name: "marketScrolled")
-            .searchable(text: $searchText, prompt: "Search coins")
+            .searchable(text: $searchText, prompt: "Search markets")
             .refreshable {
                 await viewModel.refreshMarketRows(for: selectedCategory)
             }
             .overlay {
                 if case .loaded = viewModel.state, filtered.isEmpty {
-                    MarketOverviewNoSearchResultsView()
+                    NoSearchResultsView()
                 }
             }
             .onPreferenceChange(RowOffsetKey.self) { offsets in
@@ -165,97 +153,9 @@ struct MarketOverviewView: View {
         }
     }
 
-    @ViewBuilder
-    private func listRows(shouldPaginate: Bool, thresholdIndex: Int)
-        -> some View
-    {
-        switch viewModel.state {
-        case .idle, .loading:
-            HStack {
-                Spacer()
-                ProgressView("Loading…")
-                Spacer()
-            }
-            .listRowSeparator(.hidden)
 
-        case .failed(let error):
-            VStack(spacing: 12) {
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 40))
-                    .foregroundColor(.orange)
 
-                Text("Couldn’t load markets").font(.headline)
-                Text(error.localizedDescription)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
 
-                Button("Retry") {
-                    Task {
-                        await viewModel.refreshMarketRows(for: selectedCategory)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .listRowSeparator(.hidden)
-
-        case .loaded(let coins):
-            let filtered = coins.filter {
-                searchText.isEmpty
-                    || $0.name.localizedCaseInsensitiveContains(searchText)
-            }
-
-            ForEach(Array(filtered.enumerated()), id: \.element.id) {
-                index,
-                coin in
-                marketRow(
-                    coin: coin,
-                    index: index,
-                    thresholdIndex: thresholdIndex,
-                    shouldPaginate: shouldPaginate
-                )
-            }
-
-            if shouldPaginate && viewModel.isLoadingNextPage {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func marketRow(
-        coin: MarketRow,
-        index: Int,
-        thresholdIndex: Int,
-        shouldPaginate: Bool
-    ) -> some View {
-        NavigationLink(
-            value: CoinDetailsRoute(
-                id: coin.id,
-                name: coin.name,
-                iconURL: coin.iconURL
-            )
-        ) {
-            CoinRowView(coin: coin)
-                .background(
-                    GeometryReader { geo in
-                        Color.clear.preference(
-                            key: RowOffsetKey.self,
-                            value: [
-                                coin.id: geo.frame(in: .named("marketScrolled"))
-                                    .minY
-                            ]
-                        )
-                    }
-                )
-        }
-        .id(coin.id)
-    }
 }
 
 #Preview {

@@ -99,7 +99,7 @@ enum MoneyStringFormatter {
     }
 
     /// Accepts strings like "$282,142" and returns "$282K" etc.
-    private static func parseMoneyToDouble(_ s: String) -> Double? {
+    static func parseMoneyToDouble(_ s: String) -> Double? {
         // keep digits and dot only
         let cleaned = s
             .replacingOccurrences(of: ",", with: "")
