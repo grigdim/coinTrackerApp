@@ -9,7 +9,7 @@ import Combine
 import SwiftUI
 
 // MARK: - Route Model
-struct CoinDetailsRoute: Hashable {
+struct CoinDetailsRoute: Hashable, Identifiable {
     let id: String
     let name: String
     let iconURL: URL?

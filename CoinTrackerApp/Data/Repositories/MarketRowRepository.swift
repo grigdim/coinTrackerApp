@@ -1,7 +1,7 @@
 import Foundation
 
 protocol MarketRowRepository {
-    func fetchMarketRows(category: MarketCategory, perPage: Int, page: Int)
+    func fetchMarketRows(category: MarketCategory, perPage: Int, page: Int, ids: [String]?)
         async throws -> [MarketRow]
 }
 
@@ -15,14 +15,16 @@ final class MarketRowRepositoryImpl: MarketRowRepository {
     func fetchMarketRows(
         category: MarketCategory,
         perPage: Int,
-        page: Int
+        page: Int,
+        ids: [String]? = nil
     ) async throws -> [MarketRow] {
 
         switch category {
         case .top100, .gainers, .losers:
             let endpoint = CoinGeckoEndpoint.markets(
                 perPage: perPage,
-                page: page
+                page: page,
+                ids: ids
             )
             let dtos: [MarketRowDTO] = try await apiClient.request(
                 endpoint: endpoint

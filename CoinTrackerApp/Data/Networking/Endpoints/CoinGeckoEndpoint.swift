@@ -8,34 +8,45 @@
 import Foundation
 
 enum CoinGeckoEndpoint {
-    case markets(perPage: Int, page: Int)
+    // Definition: perPage, page, then ids
+    case markets(perPage: Int, page: Int, ids: [String]?)
     case trending
     case coinDetail(id: String)
     case history(id: String, days: String)
     case search(query: String)
-
+    
     var baseURL: String { "https://api.coingecko.com/api/v3" }
-
+    
     var path: String {
         switch self {
         case .markets: return "/coins/markets"
         case .trending: return "/search/trending"
         case .coinDetail(let id): return "/coins/\(id)"
         case .history(let id, _): return "/coins/\(id)/market_chart"
-        case .search: return "/search"  //search is used for multiple cases, such as trending
+        case .search: return "/search"
         }
     }
-
+    
     var queryItems: [URLQueryItem] {
         switch self {
-        case .markets(let perPage, let page):
-            return [
+        // FIXED: Order must match the enum case definition above
+        // .markets(perPage, page, ids)
+        case .markets(let perPage, let page, let ids):
+            var query: [URLQueryItem] = [
                 URLQueryItem(name: "vs_currency", value: "usd"),
                 URLQueryItem(name: "per_page", value: "\(perPage)"),
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "sparkline", value: "true"),
                 URLQueryItem(name: "price_change_percentage", value: "24h"),
             ]
+            // Logic: If ids exist, append them
+            if let ids = ids, !ids.isEmpty {
+                let idsString = ids.joined(separator: ",")
+                query.append(URLQueryItem(name: "ids", value: idsString))
+            }
+            
+            return query
+            
         case .history(_, let days):
             return [
                 URLQueryItem(name: "vs_currency", value: "usd"),
@@ -57,7 +68,7 @@ enum CoinGeckoEndpoint {
             return []
         }
     }
-
+    
     var url: URL? {
         var components = URLComponents(string: baseURL + path)
         components?.queryItems = queryItems
