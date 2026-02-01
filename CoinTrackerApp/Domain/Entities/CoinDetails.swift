@@ -39,31 +39,34 @@ struct CoinDetails: Identifiable, Hashable, Codable {
     let subredditURL: URL?
     
     var toMarketRow: MarketRow {
-            MarketRow(
-                id: id,
-                name: name,
-                symbol: symbol,
-                iconURL: iconURL,
-                price: price,
-                marketCap: marketCap,
-                volume: volume,
-                circulatingSupply: circulatingSupply,
-                ath: ath,
-                atl: atl,
-                change24h: change24h,
-                change24hRaw: 0.0, // Default or parse from string if needed
-                isUp: isUp,
-                sparkline: sparkline
-            )
-        }
+        MarketRow(
+            id: id,
+            name: name,
+            symbol: symbol,
+            iconURL: iconURL,
+            price: price,
+            priceRaw: MoneyStringFormatter.parseMoneyToDouble(price) ?? 0.0,
+            marketCap: marketCap,
+            marketCapRaw: MoneyStringFormatter.parseMoneyToDouble(marketCap) ?? 0.0,
+            volume: volume,
+            volumeRaw: MoneyStringFormatter.parseMoneyToDouble(volume) ?? 0.0,
+            circulatingSupply: circulatingSupply,
+            ath: ath,
+            atl: atl,
+            change24h: change24h,
+            change24hRaw: 0.0, // Optional: parse from "±X.XX%" if needed
+            isUp: isUp,
+            sparkline: sparkline
+        )
+    }
     // MARK: - Hashable
-        static func == (lhs: CoinDetails, rhs: CoinDetails) -> Bool {
-            lhs.id == rhs.id
-        }
-        
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(id)
-        }
+    static func == (lhs: CoinDetails, rhs: CoinDetails) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 extension CoinDetails {
     static let sampleCoins: [CoinDetails] = [

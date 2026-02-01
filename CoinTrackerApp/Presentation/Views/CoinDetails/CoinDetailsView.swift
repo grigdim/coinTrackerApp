@@ -5,8 +5,8 @@
 //  Created by Dim Grigoriadis on 15/1/26.
 //
 
-import SwiftUI
 import Combine
+import SwiftUI
 
 // MARK: - Route Model
 struct CoinDetailsRoute: Hashable {
@@ -19,14 +19,16 @@ struct CoinDetailsRoute: Hashable {
 struct CoinDetailsView: View {
     // 1. Existing ViewModel for API Data
     @StateObject private var viewModel: CoinDetailsViewModel
-    
+    @State private var showingCreateAlert = false
+    @EnvironmentObject private var env: AppEnvironment
+
     // 2. ViewModel for User Data (Watchlists/Persistence)
     @StateObject private var watchlistsViewModel = WatchlistsViewModel()
-    
+
     let route: CoinDetailsRoute
 
     @State private var selectedChartRange: ChartRange = .day
-    
+
     // 3. State to control the "Add to Watchlist" sheet
     @State private var showAddSheet = false
 
@@ -56,7 +58,7 @@ struct CoinDetailsView: View {
                     Spacer()
                 }
                 .padding(.vertical, 50)
-                
+
             case .failed(let error):
                 VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.triangle")
@@ -78,7 +80,7 @@ struct CoinDetailsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .listRowSeparator(.hidden)
-                
+
             case .loaded(let viewData):
                 // 4. Content View
                 contentView(for: viewData)
@@ -99,6 +101,7 @@ struct CoinDetailsView: View {
             await viewModel.loadCoinDetails(for: route.id)
             // 6. Load User Data (so we know if the heart should be filled)
             watchlistsViewModel.loadData()
+            // Do not rewire NotificationManager here; it’s done at app root.
         }
         .refreshable {
             await viewModel.refreshCoinDetails(for: route.id)
@@ -129,10 +132,11 @@ struct CoinDetailsView: View {
                     showAddSheet = true
                 } label: {
                     // Check if coin exists in ANY watchlist to determine icon state
-                    let isSaved = watchlistsViewModel.watchlists.contains { list in
+                    let isSaved = watchlistsViewModel.watchlists.contains {
+                        list in
                         list.coins.contains { $0.id == route.id }
                     }
-                    
+
                     Image(systemName: isSaved ? "heart.fill" : "heart")
                         .symbolRenderingMode(.hierarchical)
                         .foregroundColor(isSaved ? .red : .primary)
@@ -143,12 +147,15 @@ struct CoinDetailsView: View {
     }
 
     private func contentView(for coinDetails: CoinDetails) -> some View {
-        VStack (spacing: 16) {
+        VStack(spacing: 16) {
             PriceHeaderView(coin: coinDetails)
 
             StatsGridView(coin: coinDetails)
 
-            PriceChartView(coinId: coinDetails.id)
+            // Use the shared AlertStore from the app environment
+            PriceChartView(coinId: coinDetails.id, alertStore: env.alertStore)
+
+            AlertsSectionView(coinId: coinDetails.id)
 
             ExpandableTextView(
                 title: coinDetails.name,
@@ -200,6 +207,158 @@ struct CoinDetailsView: View {
         }
     }
 
+    private struct AlertsSectionView: View {
+        let coinId: String
+        @EnvironmentObject var alertStore: AlertStore   // Changed to observe AlertStore directly
+        @State private var showingCreateAlert = false
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 10) {
+                let alerts = alertStore.alerts(coinId: coinId)
+                let unread = alertStore.unreadHistoryCount(coinId: coinId)
+
+                HStack {
+                    Text("Alerts")
+                        .font(.headline)
+
+                    Spacer()
+
+                    if unread > 0 {
+                        HStack(spacing: 6) {
+                            Image(systemName: "bell.badge")
+                            Text("\(unread)")
+                        }
+                        .font(.subheadline)
+                        .foregroundColor(.orange)
+                    }
+                }
+
+                if alerts.isEmpty {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bell")
+                            .foregroundColor(.secondary)
+                        Text("No alerts yet. Tap Seed to add one.")
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(alerts) { alert in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(alertTitle(alert))
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                    Text(alertSubtitle(alert))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Toggle(
+                                    "",
+                                    isOn: Binding(
+                                        get: { alert.isEnabled },
+                                        set: { newValue in
+                                            alertStore.toggleEnabled(
+                                                alertId: alert.id,
+                                                isEnabled: newValue
+                                            )
+                                        }
+                                    )
+                                )
+                                .labelsHidden()
+
+                                Button(role: .destructive) {
+                                    alertStore.delete(alert)
+                                } label: {
+                                    Image(systemName: "trash")
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(
+                                    cornerRadius: 12,
+                                    style: .continuous
+                                )
+                                .fill(Color.gray.opacity(0.08))
+                            )
+                        }
+                    }
+                }
+
+                HStack {
+                    Button {
+                        showingCreateAlert = true
+                    } label: {
+                        Label(Constants.ADD_ALERT, systemImage: "bolt.fill")
+                    }
+                }
+                .font(.subheadline)
+                .padding(.top, 4)
+            }
+            .onAppear {
+                let alerts = alertStore.alerts(coinId: coinId)
+                print(
+                    "AlertsSectionView alertStore:",
+                    ObjectIdentifier(alertStore).hashValue,
+                    "active:", alertStore.active.count,
+                    "filtered:", alerts.count,
+                    "coinId:", coinId
+                )
+            }.sheet(isPresented: $showingCreateAlert){
+                NewAlertModal(coinId: coinId, alertStore: alertStore)
+            }
+        }
+
+        private func alertTitle(_ alert: CoinPriceAlert) -> String {
+            switch alert.type {
+            case .above:
+                return "Price above \(formatCurrency(alert.targetPrice))"
+            case .below:
+                return "Price below \(formatCurrency(alert.targetPrice))"
+            case .percentage:
+                return "Change ±\(formatPercent(alert.targetPrice))"
+            }
+        }
+
+        private func alertSubtitle(_ alert: CoinPriceAlert) -> String {
+            var parts: [String] = []
+            parts.append(
+                "Created "
+                    + alert.createdAt.formatted(
+                        date: .abbreviated,
+                        time: .shortened
+                    )
+            )
+            if alert.isEnabled == false {
+                parts.append("Disabled")
+            }
+            return parts.joined(separator: " • ")
+        }
+
+        private func formatCurrency(_ value: Double) -> String {
+            let nf = NumberFormatter()
+            nf.numberStyle = .currency
+            nf.currencyCode = "USD"
+            nf.maximumFractionDigits = 2
+            nf.minimumFractionDigits = 0
+            return nf.string(from: NSNumber(value: value)) ?? "$\(value)"
+        }
+
+        private func formatPercent(_ value: Double) -> String {
+            let nf = NumberFormatter()
+            nf.numberStyle = .decimal
+            nf.maximumFractionDigits = 2
+            nf.minimumFractionDigits = 0
+            return nf.string(from: NSNumber(value: value)) ?? "\(value)"
+        }
+    }
+        
+
     private struct LinksSectionView: View {
         let coin: CoinDetails
 
@@ -215,15 +374,20 @@ struct CoinDetailsView: View {
     }
 }
 
-// MARK: - Preview
+// Preview
 #Preview {
     NavigationStack {
         CoinDetailsView(
             route: .init(
                 id: "bitcoin",
                 name: "Bitcoin",
-                iconURL: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png")
+                iconURL: URL(
+                    string:
+                        "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"
+                )
             )
         )
     }
+    .environmentObject(AppEnvironment())
+    .environmentObject(AppEnvironment().alertStore) // Ensure preview also injects AlertStore
 }

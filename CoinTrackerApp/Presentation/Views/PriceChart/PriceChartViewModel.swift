@@ -17,14 +17,16 @@ final class PriceChartViewModel: ObservableObject {
     private var activeChartRange: ChartRange = .day
 
     private let getChartData: GetChartDataUseCase
+    private let alertStore: AlertStore
     private let cacheTTL: TimeInterval = 30
 
     private var refreshTask: Task<Void, Never>?
     private var cachedChartData:
         [String: [ChartRange: Cached<[CoinChartPoint]>]] = [:]
 
-    init(getChartData: GetChartDataUseCase) {
+    init(getChartData: GetChartDataUseCase, alertStore: AlertStore) {
         self.getChartData = getChartData
+        self.alertStore = alertStore
     }
 
     func loadChartRange(for id: String, range: ChartRange) async {
@@ -70,6 +72,22 @@ final class PriceChartViewModel: ObservableObject {
                     fetchedAt: .now
                 )
                 self.state = .loaded(chartData)
+
+                // Evaluate alerts and schedule notifications
+                if let latestPrice = chartData.last?.value {
+                    let baseline = chartData.first?.value
+                    let triggered = self.alertStore.evaluateAlerts(
+                        coinId: id,
+                        latestPrice: latestPrice,
+                        baselinePriceForPercentage: baseline
+                    )
+                    for alert in triggered {
+                        NotificationManager.shared.schedulePriceAlertNotification(
+                            alert: alert,
+                            latestPrice: latestPrice
+                        )
+                    }
+                }
 
             } catch {
                 guard !Task.isCancelled else { return }

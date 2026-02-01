@@ -14,7 +14,8 @@ struct PriceChartView: View {
     @State private var visibleXDomain: ClosedRange<Date>?
     @State private var lastMagnification: CGFloat = 1.0
 
-    init(coinId: String) {
+    // New designated initializer accepting AlertStore explicitly
+    init(coinId: String, alertStore: AlertStore) {
         self.coinId = coinId
 
         let apiClient = APIClient()
@@ -22,7 +23,10 @@ struct PriceChartView: View {
         let useCase = GetChartDataUseCaseImpl(repository: repository)
 
         _viewModel = StateObject(
-            wrappedValue: PriceChartViewModel(getChartData: useCase)
+            wrappedValue: PriceChartViewModel(
+                getChartData: useCase,
+                alertStore: alertStore
+            )
         )
     }
 
@@ -59,13 +63,9 @@ struct PriceChartView: View {
         }
     }
 
-    // MARK: - Task key
-
     private var taskKey: String {
         "\(coinId)-\(selectedChartRange.label)"
     }
-
-    // MARK: - ViewState helpers
 
     private var isLoading: Bool {
         if case .loading = viewModel.state { return true }
@@ -91,8 +91,6 @@ struct PriceChartView: View {
             "\(pts.count)-\(first.timeIntervalSince1970)-\(last.timeIntervalSince1970)"
     }
 
-    // MARK: - Header
-
     private var header: some View {
         HStack {
             Text("Price Chart")
@@ -114,8 +112,6 @@ struct PriceChartView: View {
         }
     }
 
-    // MARK: - Container
-
     @ViewBuilder
     private var chartContainer: some View {
         switch viewModel.state {
@@ -134,8 +130,6 @@ struct PriceChartView: View {
             }
         }
     }
-
-    // MARK: - Chart
 
     private func chart(points sorted: [CoinChartPoint]) -> some View {
         let fullX =
@@ -156,7 +150,6 @@ struct PriceChartView: View {
                 .interpolationMethod(.catmullRom)
             }
 
-            // Just the rule line (tooltip is handled in chartOverlay)
             if let selectedPoint {
                 RuleMark(x: .value("Selected", selectedPoint.date))
             }
@@ -165,7 +158,6 @@ struct PriceChartView: View {
         .chartYScale(domain: yDomain)
         .frame(height: 220)
 
-        // ✅ Clip marks to plot area to stop overflow
         .chartPlotStyle { plotArea in
             plotArea.clipped()
         }
@@ -180,7 +172,6 @@ struct PriceChartView: View {
                 .stroke(Color.gray.opacity(0.25))
         )
 
-        // ✅ Clip everything (including overlay) to rounded rect
         .clipShape(
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         )
@@ -193,7 +184,6 @@ struct PriceChartView: View {
                     .fill(Color.clear)
                     .contentShape(Rectangle())
 
-                    // Drag = scrub
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
@@ -207,7 +197,6 @@ struct PriceChartView: View {
                             }
                     )
 
-                    // Pinch = zoom (X only)
                     .simultaneousGesture(
                         MagnificationGesture()
                             .onChanged { magnification in
@@ -226,7 +215,6 @@ struct PriceChartView: View {
                             }
                     )
 
-                // ✅ Tooltip (clamped inside chart)
                 if let p = selectedPoint,
                     let xInPlot = proxy.position(forX: p.date)
                 {
@@ -282,8 +270,6 @@ struct PriceChartView: View {
         .padding(.vertical, 4)
     }
 
-    // MARK: - Placeholder
-
     private func placeholderBox(text: String) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -300,7 +286,7 @@ struct PriceChartView: View {
         }
     }
 
-    // MARK: - Helpers
+    //  Helpers
 
     private func fullXDomain(for points: [CoinChartPoint]) -> ClosedRange<Date>?
     {

@@ -10,6 +10,8 @@ import Combine
 
 @MainActor
 final class AppEnvironment: ObservableObject {
+    // Strong reference so NotificationManager’s weak ref won’t be nil
+    let alertStore = AlertStore()
+
     init() {}
 }
-
