@@ -2,12 +2,16 @@ import SwiftUI
 
 @main
 struct CoinTrackerApp: App {
+    @StateObject private var stores = AppStores()
     @StateObject private var env = AppEnvironment()
 
     var body: some Scene {
         WindowGroup {
             RootTabView()
-                .environmentObject(env)
+                .environmentObject(stores)
+                .task {
+                    await stores.categories.loadIfNeeded()
+                }
                 .environmentObject(env.alertStore)
                 .task {
                     // Share the AlertStore with NotificationManager

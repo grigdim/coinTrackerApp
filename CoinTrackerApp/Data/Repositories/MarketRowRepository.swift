@@ -21,6 +21,7 @@ final class MarketRowRepositoryImpl: MarketRowRepository {
         switch category {
         case .top100, .gainers, .losers:
             let endpoint = CoinGeckoEndpoint.markets(
+                category: "layer-1",
                 perPage: perPage,
                 page: page
             )

@@ -9,14 +9,18 @@ import SwiftUI
 
 struct WatchlistView: View {
     @StateObject private var viewModel = WatchlistsViewModel()
-    @State private var showingAddSheet = false 
-    
+    @State private var showingAddSheet = false
+
     var body: some View {
         NavigationStack {
             List {
                 ForEach($viewModel.watchlists) { $watchlist in
                     ZStack {
-                        NavigationLink(destination: WatchlistDetailView(watchlist: $watchlist)) {
+                        NavigationLink(
+                            destination: WatchlistDetailView(
+                                watchlist: $watchlist
+                            )
+                        ) {
                             EmptyView()
                         }
                         .opacity(0)
@@ -29,7 +33,7 @@ struct WatchlistView: View {
                                 Image(systemName: watchlist.icon)
                                     .foregroundColor(.blue)
                             }
-                            
+
                             VStack(alignment: .leading) {
                                 Text(watchlist.name)
                                     .font(.headline)
@@ -41,12 +45,15 @@ struct WatchlistView: View {
                         }
                         .padding(.vertical, 4)
                     }
-                    .listRowSeparator(.visible)
-                    
+
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
-                            if let index = viewModel.watchlists.firstIndex(where: { $0.id == watchlist.id }) {
-                                viewModel.deleteWatchlist(at: IndexSet(integer: index))
+                            if let index = viewModel.watchlists.firstIndex(
+                                where: { $0.id == watchlist.id })
+                            {
+                                viewModel.deleteWatchlist(
+                                    at: IndexSet(integer: index)
+                                )
                             }
                         } label: {
                             Label("Delete", systemImage: "trash")

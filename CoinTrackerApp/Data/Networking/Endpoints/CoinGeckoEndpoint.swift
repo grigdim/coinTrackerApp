@@ -8,7 +8,8 @@
 import Foundation
 
 enum CoinGeckoEndpoint {
-    case markets(perPage: Int, page: Int)
+    case categoriesList
+    case markets(category: String, perPage: Int, page: Int)
     case trending
     case coinDetail(id: String)
     case history(id: String, days: String)
@@ -18,19 +19,23 @@ enum CoinGeckoEndpoint {
 
     var path: String {
         switch self {
+        case .categoriesList: return "/coins/categories/list"
         case .markets: return "/coins/markets"
         case .trending: return "/search/trending"
         case .coinDetail(let id): return "/coins/\(id)"
         case .history(let id, _): return "/coins/\(id)/market_chart"
-        case .search: return "/search"  //search is used for multiple cases, such as trending
+        case .search: return "/search"
         }
     }
 
     var queryItems: [URLQueryItem] {
         switch self {
-        case .markets(let perPage, let page):
+        case .categoriesList:
+            return []
+        case .markets(let category, let perPage, let page):
             return [
                 URLQueryItem(name: "vs_currency", value: "usd"),
+                URLQueryItem(name: "market_category", value: "\(category)"),
                 URLQueryItem(name: "per_page", value: "\(perPage)"),
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "sparkline", value: "true"),

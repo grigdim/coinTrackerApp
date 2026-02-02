@@ -43,7 +43,7 @@ struct CoinRowView: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 2) {
+            VStack(alignment: .trailing, spacing: 6) {
                 Text(coin.price)
                     .font(.headline)
                     .lineLimit(1)
@@ -51,9 +51,7 @@ struct CoinRowView: View {
                 HStack(spacing: 6) {
                     if !coin.sparkline.isEmpty {
                         SparklineView(values: coin.sparkline)
-                            .frame(width: 32, height: 32)
                     }
-
                     Text(coin.change24h)
                         .font(.caption)
                         .foregroundColor(coin.isUp ? .green : .red)
@@ -61,8 +59,6 @@ struct CoinRowView: View {
                 }
             }
         }
-        .padding(.vertical, 6)
-        .contentShape(Rectangle())
     }
 
     private var iconPlaceholder: some View {

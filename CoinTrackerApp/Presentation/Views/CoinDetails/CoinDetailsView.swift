@@ -49,7 +49,7 @@ struct CoinDetailsView: View {
     ]
 
     var body: some View {
-        ScrollView {
+        Group {
             switch viewModel.state {
             case .idle, .loading:
                 HStack {
@@ -84,18 +84,9 @@ struct CoinDetailsView: View {
             case .loaded(let viewData):
                 // 4. Content View
                 contentView(for: viewData)
-                    // 5. Present YOUR existing AddToWatchlistView here
-                    .sheet(isPresented: $showAddSheet) {
-                        AddToWatchlistView(
-                            viewModel: watchlistsViewModel,
-                            coin: viewData
-                        )
-                        .presentationDetents([.medium])
-                    }
+
             }
         }
-        .padding(.horizontal)
-        .padding(.top, 8)
         .task(id: route.id) {
             // Load API Data
             await viewModel.loadCoinDetails(for: route.id)
@@ -106,6 +97,37 @@ struct CoinDetailsView: View {
         .refreshable {
             await viewModel.refreshCoinDetails(for: route.id)
         }
+    }
+
+    private func contentView(for coinDetails: CoinDetails) -> some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                PriceHeaderView(coin: coinDetails)
+
+                StatsGridView(coin: coinDetails)
+
+                PriceChartView(
+                    coinId: coinDetails.id,
+                    alertStore: env.alertStore
+                )
+
+                ExpandableTextView(
+                    title: coinDetails.name,
+                    description: coinDetails.description
+                )
+
+                LinksSectionView(coin: coinDetails)
+            }
+            .sheet(isPresented: $showAddSheet) {
+                AddToWatchlistView(
+                    viewModel: watchlistsViewModel,
+                    coin: coinDetails
+                )
+                .presentationDetents([.medium])
+            }
+        }
+        .scrollIndicators(.hidden)
+        .padding(.horizontal)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 8) {
@@ -119,14 +141,14 @@ struct CoinDetailsView: View {
                             Image(systemName: "bitcoinsign.circle")
                         }
                     }
-                    .frame(width: 20, height: 20)
+                    .frame(width: 40, height: 40)
 
                     Text(route.name)
-                        .font(.headline)
+                        .font(.title)
+                        .lineLimit(1)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-
-            // 7. Updated Heart Button Logic
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showAddSheet = true
@@ -209,7 +231,7 @@ struct CoinDetailsView: View {
 
     private struct AlertsSectionView: View {
         let coinId: String
-        @EnvironmentObject var alertStore: AlertStore   // Changed to observe AlertStore directly
+        @EnvironmentObject var alertStore: AlertStore  // Changed to observe AlertStore directly
         @State private var showingCreateAlert = false
 
         var body: some View {
@@ -305,11 +327,14 @@ struct CoinDetailsView: View {
                 print(
                     "AlertsSectionView alertStore:",
                     ObjectIdentifier(alertStore).hashValue,
-                    "active:", alertStore.active.count,
-                    "filtered:", alerts.count,
-                    "coinId:", coinId
+                    "active:",
+                    alertStore.active.count,
+                    "filtered:",
+                    alerts.count,
+                    "coinId:",
+                    coinId
                 )
-            }.sheet(isPresented: $showingCreateAlert){
+            }.sheet(isPresented: $showingCreateAlert) {
                 NewAlertModal(coinId: coinId, alertStore: alertStore)
             }
         }
@@ -357,7 +382,6 @@ struct CoinDetailsView: View {
             return nf.string(from: NSNumber(value: value)) ?? "\(value)"
         }
     }
-        
 
     private struct LinksSectionView: View {
         let coin: CoinDetails
@@ -389,5 +413,5 @@ struct CoinDetailsView: View {
         )
     }
     .environmentObject(AppEnvironment())
-    .environmentObject(AppEnvironment().alertStore) // Ensure preview also injects AlertStore
+    .environmentObject(AppEnvironment().alertStore)  // Ensure preview also injects AlertStore
 }
