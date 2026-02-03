@@ -45,9 +45,11 @@ class PortfolioViewModel: ObservableObject {
                 ids: userCoinIds,
             )
             
+            // 2. Map using the RAW double (No string conversion needed)
             let priceMap = Dictionary(uniqueKeysWithValues: marketRows.map {
-                ($0.id, $0.price.asCurrencyDouble)
+                ($0.id, $0.currentPriceRaw)
             })
+            
             
             var updatedAssets = assets
             for i in 0..<updatedAssets.count {
