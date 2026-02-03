@@ -58,7 +58,8 @@ final class MarketOverviewViewModel: ObservableObject {
             let marketRows = try await getMarketRows.execute(
                 category: category,
                 perPage: perPage,
-                page: 1
+                page: 1,
+                ids: nil
             )
 
             let finalRows: [MarketRow]
@@ -119,7 +120,8 @@ final class MarketOverviewViewModel: ObservableObject {
             let newRows = try await getMarketRows.execute(
                 category: category,
                 perPage: perPage,
-                page: nextPage
+                page: nextPage,
+                ids: nil
             )
 
             let merged = currentNow + newRows

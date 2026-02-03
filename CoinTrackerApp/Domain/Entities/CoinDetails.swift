@@ -56,7 +56,8 @@ struct CoinDetails: Identifiable, Hashable, Codable {
             change24h: change24h,
             change24hRaw: 0.0, // Optional: parse from "±X.XX%" if needed
             isUp: isUp,
-            sparkline: sparkline
+            sparkline: sparkline,
+            currentPriceRaw: 0.0
         )
     }
     // MARK: - Hashable

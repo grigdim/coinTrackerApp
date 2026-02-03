@@ -31,6 +31,7 @@ struct MarketRow: Identifiable, Hashable {
     let isUp: Bool
 
     let sparkline: [Double]
+    let currentPriceRaw: Double
 }
 extension MarketRow {
     static let sampleRows: [MarketRow] = [
@@ -51,7 +52,8 @@ extension MarketRow {
             change24h: "+2.45%",
             change24hRaw: 2.45,
             isUp: true,
-            sparkline: [41200, 41800, 41550, 42010, 42500, 43000, 42800, 43300, 43200, 43550]
+            sparkline: [41200, 41800, 41550, 42010, 42500, 43000, 42800, 43300, 43200, 43550],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "ethereum",
@@ -70,7 +72,8 @@ extension MarketRow {
             change24h: "+1.12%",
             change24hRaw: 1.12,
             isUp: true,
-            sparkline: [2240, 2265, 2250, 2288, 2300, 2315, 2298, 2325, 2310, 2332]
+            sparkline: [2240, 2265, 2250, 2288, 2300, 2315, 2298, 2325, 2310, 2332],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "tether",
@@ -89,7 +92,8 @@ extension MarketRow {
             change24h: "+0.01%",
             change24hRaw: 0.01,
             isUp: true,
-            sparkline: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+            sparkline: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "binancecoin",
@@ -108,7 +112,8 @@ extension MarketRow {
             change24h: "-0.54%",
             change24hRaw: -0.54,
             isUp: false,
-            sparkline: [305, 307, 306, 309, 311, 313, 312, 314, 313, 312]
+            sparkline: [305, 307, 306, 309, 311, 313, 312, 314, 313, 312],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "ripple",
@@ -127,7 +132,8 @@ extension MarketRow {
             change24h: "+0.83%",
             change24hRaw: 0.83,
             isUp: true,
-            sparkline: [0.55, 0.552, 0.553, 0.558, 0.561, 0.565, 0.563, 0.569, 0.568, 0.57]
+            sparkline: [0.55, 0.552, 0.553, 0.558, 0.561, 0.565, 0.563, 0.569, 0.568, 0.57],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "cardano",
@@ -146,7 +152,8 @@ extension MarketRow {
             change24h: "-1.10%",
             change24hRaw: -1.10,
             isUp: false,
-            sparkline: [0.47, 0.472, 0.471, 0.475, 0.478, 0.482, 0.481, 0.485, 0.483, 0.48]
+            sparkline: [0.47, 0.472, 0.471, 0.475, 0.478, 0.482, 0.481, 0.485, 0.483, 0.48],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "dogecoin",
@@ -165,7 +172,8 @@ extension MarketRow {
             change24h: "+3.10%",
             change24hRaw: 3.10,
             isUp: true,
-            sparkline: [0.081, 0.082, 0.0825, 0.083, 0.084, 0.085, 0.0845, 0.086, 0.0855, 0.0862]
+            sparkline: [0.081, 0.082, 0.0825, 0.083, 0.084, 0.085, 0.0845, 0.086, 0.0855, 0.0862],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "solana",
@@ -184,7 +192,8 @@ extension MarketRow {
             change24h: "-0.22%",
             change24hRaw: -0.22,
             isUp: false,
-            sparkline: [94, 95, 96, 97, 98, 99, 98.5, 100, 99.2, 98.4]
+            sparkline: [94, 95, 96, 97, 98, 99, 98.5, 100, 99.2, 98.4],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "polkadot",
@@ -203,7 +212,8 @@ extension MarketRow {
             change24h: "+0.40%",
             change24hRaw: 0.40,
             isUp: true,
-            sparkline: [6.8, 6.9, 6.95, 7.0, 7.05, 7.1, 7.08, 7.12, 7.1, 7.11]
+            sparkline: [6.8, 6.9, 6.95, 7.0, 7.05, 7.1, 7.08, 7.12, 7.1, 7.11],
+            currentPriceRaw: 0.0
         ),
         MarketRow(
             id: "tron",
@@ -222,7 +232,8 @@ extension MarketRow {
             change24h: "+0.15%",
             change24hRaw: 0.15,
             isUp: true,
-            sparkline: [0.102, 0.103, 0.104, 0.105, 0.106, 0.1065, 0.106, 0.107, 0.1068, 0.106]
+            sparkline: [0.102, 0.103, 0.104, 0.105, 0.106, 0.1065, 0.106, 0.107, 0.1068, 0.106],
+            currentPriceRaw: 0.0
         )
     ]
 }
