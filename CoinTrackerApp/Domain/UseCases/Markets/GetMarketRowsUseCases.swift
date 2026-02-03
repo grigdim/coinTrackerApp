@@ -9,7 +9,7 @@ import Foundation
 
 protocol GetMarketRowsUseCase {
     func execute(
-        category: MarketCategory,
+        category: String,
         perPage: Int,
         page: Int,
         ids: [String]?
@@ -24,7 +24,7 @@ final class GetMarketRowsUseCaseImpl: GetMarketRowsUseCase {
     }
 
     func execute(
-        category: MarketCategory,
+        category: String,
         perPage: Int,
         page: Int,
         ids: [String]? = nil

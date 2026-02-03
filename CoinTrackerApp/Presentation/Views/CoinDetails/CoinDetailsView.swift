@@ -49,7 +49,7 @@ struct CoinDetailsView: View {
     ]
 
     var body: some View {
-        ScrollView {
+        Group {
             switch viewModel.state {
             case .idle, .loading:
                 HStack {
@@ -84,18 +84,9 @@ struct CoinDetailsView: View {
             case .loaded(let viewData):
                 // 4. Content View
                 contentView(for: viewData)
-                    // 5. Present YOUR existing AddToWatchlistView here
-                    .sheet(isPresented: $showAddSheet) {
-                        AddToWatchlistView(
-                            viewModel: watchlistsViewModel,
-                            coin: viewData
-                        )
-                        .presentationDetents([.medium])
-                    }
+
             }
         }
-        .padding(.horizontal)
-        .padding(.top, 8)
         .task(id: route.id) {
             // Load API Data
             await viewModel.loadCoinDetails(for: route.id)
@@ -106,6 +97,40 @@ struct CoinDetailsView: View {
         .refreshable {
             await viewModel.refreshCoinDetails(for: route.id)
         }
+    }
+
+    private func contentView(for coinDetails: CoinDetails) -> some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                PriceHeaderView(coin: coinDetails)
+
+                StatsGridView(coin: coinDetails)
+
+                PriceChartView(
+                    coinId: coinDetails.id,
+                    alertStore: env.alertStore
+                )
+
+                AlertsSectionView(coinId: coinDetails.id)
+                    .environmentObject(env)
+
+                ExpandableTextView(
+                    title: coinDetails.name,
+                    description: coinDetails.description
+                )
+
+                LinksSectionView(coin: coinDetails)
+            }
+            .sheet(isPresented: $showAddSheet) {
+                AddToWatchlistView(
+                    viewModel: watchlistsViewModel,
+                    coin: coinDetails
+                )
+                .presentationDetents([.medium])
+            }
+        }
+        .scrollIndicators(.hidden)
+        .padding(.horizontal)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 8) {
@@ -119,14 +144,14 @@ struct CoinDetailsView: View {
                             Image(systemName: "bitcoinsign.circle")
                         }
                     }
-                    .frame(width: 20, height: 20)
+                    .frame(width: 40, height: 40)
 
                     Text(route.name)
-                        .font(.headline)
+                        .font(.title)
+                        .lineLimit(1)
                 }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-
-            // 7. Updated Heart Button Logic
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showAddSheet = true
@@ -144,26 +169,6 @@ struct CoinDetailsView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func contentView(for coinDetails: CoinDetails) -> some View {
-        VStack(spacing: 16) {
-            PriceHeaderView(coin: coinDetails)
-
-            StatsGridView(coin: coinDetails)
-
-            // Use the shared AlertStore from the app environment
-            PriceChartView(coinId: coinDetails.id, alertStore: env.alertStore)
-
-            AlertsSectionView(coinId: coinDetails.id)
-
-            ExpandableTextView(
-                title: coinDetails.name,
-                description: coinDetails.description
-            )
-
-            LinksSectionView(coin: coinDetails)
-        }
     }
 
     // MARK: - Subviews
@@ -209,13 +214,13 @@ struct CoinDetailsView: View {
 
     private struct AlertsSectionView: View {
         let coinId: String
-        @EnvironmentObject var alertStore: AlertStore   // Changed to observe AlertStore directly
+        @EnvironmentObject private var env: AppEnvironment
         @State private var showingCreateAlert = false
 
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
-                let alerts = alertStore.alerts(coinId: coinId)
-                let unread = alertStore.unreadHistoryCount(coinId: coinId)
+                let alerts = env.alertStore.alerts(coinId: coinId)
+                let unread = env.alertStore.unreadHistoryCount(coinId: coinId)
 
                 HStack {
                     Text("Alerts")
@@ -262,7 +267,7 @@ struct CoinDetailsView: View {
                                     isOn: Binding(
                                         get: { alert.isEnabled },
                                         set: { newValue in
-                                            alertStore.toggleEnabled(
+                                            env.alertStore.toggleEnabled(
                                                 alertId: alert.id,
                                                 isEnabled: newValue
                                             )
@@ -272,7 +277,7 @@ struct CoinDetailsView: View {
                                 .labelsHidden()
 
                                 Button(role: .destructive) {
-                                    alertStore.delete(alert)
+                                    env.alertStore.delete(alert)
                                 } label: {
                                     Image(systemName: "trash")
                                 }
@@ -301,16 +306,19 @@ struct CoinDetailsView: View {
                 .padding(.top, 4)
             }
             .onAppear {
-                let alerts = alertStore.alerts(coinId: coinId)
+                let alerts = env.alertStore.alerts(coinId: coinId)
                 print(
                     "AlertsSectionView alertStore:",
-                    ObjectIdentifier(alertStore).hashValue,
-                    "active:", alertStore.active.count,
-                    "filtered:", alerts.count,
-                    "coinId:", coinId
+                    ObjectIdentifier(env.alertStore).hashValue,
+                    "active:",
+                    env.alertStore.active.count,
+                    "filtered:",
+                    alerts.count,
+                    "coinId:",
+                    coinId
                 )
-            }.sheet(isPresented: $showingCreateAlert){
-                NewAlertModal(coinId: coinId, alertStore: alertStore)
+            }.sheet(isPresented: $showingCreateAlert) {
+                NewAlertModal(coinId: coinId, alertStore: env.alertStore)
             }
         }
 
@@ -357,7 +365,6 @@ struct CoinDetailsView: View {
             return nf.string(from: NSNumber(value: value)) ?? "\(value)"
         }
     }
-        
 
     private struct LinksSectionView: View {
         let coin: CoinDetails
@@ -388,6 +395,6 @@ struct CoinDetailsView: View {
             )
         )
     }
-    .environmentObject(AppEnvironment())
-    .environmentObject(AppEnvironment().alertStore) // Ensure preview also injects AlertStore
+    .environmentObject(AppEnvironment(alertStore: AlertStore()))
+    .environmentObject(AlertStore())
 }

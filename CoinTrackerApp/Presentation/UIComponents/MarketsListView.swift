@@ -8,6 +8,7 @@ struct MarketsListView: View {
     let thresholdIndex: Int?
 
     let onRetry: () -> Void
+    let onRowAppear: (Int) -> Void
 
     var body: some View {
         switch state {
@@ -47,11 +48,10 @@ struct MarketsListView: View {
                 )
             ) {
                 MarketRowItemView(
-                    row: row,
-                    index: index,
-                    thresholdIndex: thresholdIndex ?? 0,
-                    shouldPaginate: shouldPaginate ?? false
-                )
+                    row: row
+                ) {
+                    onRowAppear(index)
+                }
             }
         }
     }

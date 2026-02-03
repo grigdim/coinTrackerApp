@@ -2,12 +2,12 @@ import SwiftUI
 
 struct CoinAlertsDetailView: View {
     let coinId: String
-    @EnvironmentObject var alertStore: AlertStore
+    @EnvironmentObject private var env: AppEnvironment
 
     var body: some View {
         List {
             Section(header: Text(coinId)) {
-                let alerts = alertStore.alerts(coinId: coinId)
+                let alerts = env.alertStore.alerts(coinId: coinId)
                 if alerts.isEmpty {
                     HStack(spacing: 6) {
                         Image(systemName: "bell")
@@ -39,7 +39,7 @@ struct CoinAlertsDetailView: View {
                                 isOn: Binding(
                                     get: { alert.isEnabled },
                                     set: { newValue in
-                                        alertStore.toggleEnabled(
+                                        env.alertStore.toggleEnabled(
                                             alertId: alert.id,
                                             isEnabled: newValue
                                         )
@@ -50,7 +50,7 @@ struct CoinAlertsDetailView: View {
                             .toggleStyle(.switch)
                             .scaleEffect(0.85)
                             Button(role: .destructive) {
-                                alertStore.delete(alert)
+                                env.alertStore.delete(alert)
                             } label: {
                                 Image(systemName: "trash")
                                     .imageScale(.small)
@@ -103,46 +103,6 @@ struct CoinAlertsDetailView: View {
             triggeredAt: nil,
             isUnread: false
         )
-        alertStore.add(sample)
-    }
-
-    private func title(for alert: CoinPriceAlert) -> String {
-        switch alert.type {
-        case .above: return "Price above \(currency(alert.targetPrice))"
-        case .below: return "Price below \(currency(alert.targetPrice))"
-        case .percentage: return "Change ±\(percent(alert.targetPrice))"
-        }
-    }
-
-    private func subtitle(for alert: CoinPriceAlert) -> String {
-        var parts: [String] = []
-        parts.append(
-            "Created "
-                + alert.createdAt.formatted(
-                    date: .abbreviated,
-                    time: .shortened
-                )
-        )
-        if alert.isEnabled == false {
-            parts.append("Disabled")
-        }
-        return parts.joined(separator: " • ")
-    }
-
-    private func currency(_ value: Double) -> String {
-        let nf = NumberFormatter()
-        nf.numberStyle = .currency
-        nf.currencyCode = "USD"
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-        return nf.string(from: NSNumber(value: value)) ?? "$\(value)"
-    }
-
-    private func percent(_ value: Double) -> String {
-        let nf = NumberFormatter()
-        nf.numberStyle = .decimal
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-        return nf.string(from: NSNumber(value: value)) ?? "\(value)"
+        env.alertStore.add(sample)
     }
 }

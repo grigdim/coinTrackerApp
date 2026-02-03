@@ -3,20 +3,29 @@ import SwiftUI
 struct SearchFiltersSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var draft: SearchFilters
-    let onApply: (SearchFilters) -> Void
+    @State private var draft: SearchFiltersDraft
+    let categories: [Category]
+    let onApply: (SearchFilters, String) -> Void
     let onReset: () -> Void
 
     private let priceMax: Double = 200_000
-    private let marketCapMax: Double = 3_000_000_000_000
-    private let volumeMax: Double = 300_000_000_000
+    private let marketCapMax: Double = 2_000_000_000_000
+    private let volumeMax: Double = 200_000_000_000
 
     init(
         current: SearchFilters,
-        onApply: @escaping (SearchFilters) -> Void,
+        currentCategoryId: String,
+        categories: [Category],
+        onApply: @escaping (SearchFilters, String) -> Void,
         onReset: @escaping () -> Void
     ) {
-        _draft = State(initialValue: current)
+        _draft = State(
+            initialValue: SearchFiltersDraft(
+                filters: current,
+                categoryId: currentCategoryId
+            )
+        )
+        self.categories = categories
         self.onApply = onApply
         self.onReset = onReset
     }
@@ -25,8 +34,14 @@ struct SearchFiltersSheet: View {
         NavigationStack {
             Form {
                 Section("Price (USD)") {
-                    rangeRow(title: "Min", value: draft.price.lowerBound)
-                    rangeRow(title: "Max", value: draft.price.upperBound)
+                    rangeRow(
+                        title: "Min",
+                        value: draft.filters.price.lowerBound
+                    )
+                    rangeRow(
+                        title: "Max",
+                        value: draft.filters.price.upperBound
+                    )
 
                     let minPrice = 0.0001
                     let maxPrice = priceMax
@@ -35,7 +50,7 @@ struct SearchFiltersSheet: View {
                         value: Binding(
                             get: {
                                 toLogValue(
-                                    draft.price.lowerBound,
+                                    draft.filters.price.lowerBound,
                                     minValue: minPrice,
                                     maxValue: maxPrice
                                 )
@@ -48,10 +63,10 @@ struct SearchFiltersSheet: View {
                                         maxValue: maxPrice
                                     )
                                 let newUpper = max(
-                                    draft.price.upperBound,
+                                    draft.filters.price.upperBound,
                                     newLower
                                 )
-                                draft.price = newLower...newUpper
+                                draft.filters.price = newLower...newUpper
                             }
                         ),
                         in: 0...1
@@ -61,7 +76,7 @@ struct SearchFiltersSheet: View {
                         value: Binding(
                             get: {
                                 toLogValue(
-                                    draft.price.upperBound,
+                                    draft.filters.price.upperBound,
                                     minValue: minPrice,
                                     maxValue: maxPrice
                                 )
@@ -74,10 +89,10 @@ struct SearchFiltersSheet: View {
                                         maxValue: maxPrice
                                     )
                                 let newLower = min(
-                                    draft.price.lowerBound,
+                                    draft.filters.price.lowerBound,
                                     newUpper
                                 )
-                                draft.price = newLower...newUpper
+                                draft.filters.price = newLower...newUpper
                             }
                         ),
                         in: 0...1
@@ -85,22 +100,29 @@ struct SearchFiltersSheet: View {
                 }
 
                 Section("Market Cap (USD)") {
-                    rangeRow(title: "Min", value: draft.marketCap.lowerBound)
-                    rangeRow(title: "Max", value: draft.marketCap.upperBound)
+                    rangeRow(
+                        title: "Min",
+                        value: draft.filters.marketCap.lowerBound
+                    )
+                    rangeRow(
+                        title: "Max",
+                        value: draft.filters.marketCap.upperBound
+                    )
 
                     Slider(
                         value: Binding(
-                            get: { draft.marketCap.lowerBound },
+                            get: { draft.filters.marketCap.lowerBound },
                             set: { newLower in
                                 let clampedLower = max(
                                     0,
                                     min(newLower, marketCapMax)
                                 )
                                 let newUpper = max(
-                                    draft.marketCap.upperBound,
+                                    draft.filters.marketCap.upperBound,
                                     clampedLower
                                 )
-                                draft.marketCap = clampedLower...newUpper
+                                draft.filters.marketCap =
+                                    clampedLower...newUpper
                             }
                         ),
                         in: 0...marketCapMax,
@@ -109,17 +131,18 @@ struct SearchFiltersSheet: View {
 
                     Slider(
                         value: Binding(
-                            get: { draft.marketCap.upperBound },
+                            get: { draft.filters.marketCap.upperBound },
                             set: { newUpper in
                                 let clampedUpper = max(
                                     0,
                                     min(newUpper, marketCapMax)
                                 )
                                 let newLower = min(
-                                    draft.marketCap.lowerBound,
+                                    draft.filters.marketCap.lowerBound,
                                     clampedUpper
                                 )
-                                draft.marketCap = newLower...clampedUpper
+                                draft.filters.marketCap =
+                                    newLower...clampedUpper
                             }
                         ),
                         in: 0...marketCapMax,
@@ -128,22 +151,28 @@ struct SearchFiltersSheet: View {
                 }
 
                 Section("Volume (USD)") {
-                    rangeRow(title: "Min", value: draft.volume.lowerBound)
-                    rangeRow(title: "Max", value: draft.volume.upperBound)
+                    rangeRow(
+                        title: "Min",
+                        value: draft.filters.volume.lowerBound
+                    )
+                    rangeRow(
+                        title: "Max",
+                        value: draft.filters.volume.upperBound
+                    )
 
                     Slider(
                         value: Binding(
-                            get: { draft.volume.lowerBound },
+                            get: { draft.filters.volume.lowerBound },
                             set: { newLower in
                                 let clampedLower = max(
                                     0,
                                     min(newLower, volumeMax)
                                 )
                                 let newUpper = max(
-                                    draft.volume.upperBound,
+                                    draft.filters.volume.upperBound,
                                     clampedLower
                                 )
-                                draft.volume = clampedLower...newUpper
+                                draft.filters.volume = clampedLower...newUpper
                             }
                         ),
                         in: 0...volumeMax,
@@ -152,17 +181,17 @@ struct SearchFiltersSheet: View {
 
                     Slider(
                         value: Binding(
-                            get: { draft.volume.upperBound },
+                            get: { draft.filters.volume.upperBound },
                             set: { newUpper in
                                 let clampedUpper = max(
                                     0,
                                     min(newUpper, volumeMax)
                                 )
                                 let newLower = min(
-                                    draft.volume.lowerBound,
+                                    draft.filters.volume.lowerBound,
                                     clampedUpper
                                 )
-                                draft.volume = newLower...clampedUpper
+                                draft.filters.volume = newLower...clampedUpper
                             }
                         ),
                         in: 0...volumeMax,
@@ -170,35 +199,25 @@ struct SearchFiltersSheet: View {
                     )
                 }
 
-                //                Section("Category") {
-                //                    Picker(
-                //                        "Category",
-                //                        selection: Binding(
-                //                            get: { draft.category ?? "All" },
-                //                            set: { newValue in
-                //                                draft.category =
-                //                                    (newValue == "All" ? nil : newValue)
-                //                            }
-                //                        )
-                //                    ) {
-                //                        Text("All").tag("All")
-                //                        Text("Layer 1").tag("layer-1")
-                //                        Text("DeFi").tag("decentralized-finance-defi")
-                //                        Text("Meme").tag("meme-token")
-                //                    }
-                //                }
+                Section("Category") {
+                    Picker("Category", selection: $draft.categoryId) {
+                        ForEach(categories) { cat in
+                            Text(cat.name).tag(cat.id)
+                        }
+                    }
+                }
             }
             .navigationTitle("Filters")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Reset") {
                         onReset()
-                        draft = .default
+                        draft = .default(categoryId: "layer-1")
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Apply") {
-                        onApply(draft)
+                        onApply(draft.filters, draft.categoryId)
                         dismiss()
                     }
                     .fontWeight(.semibold)
@@ -257,7 +276,12 @@ struct SearchFiltersSheet: View {
 #Preview {
     SearchFiltersSheet(
         current: .default,
-        onApply: { _ in },
+        currentCategoryId: "layer-1",
+        categories: [
+            Category(id: "layer-1", name: "Layer 1"),
+            Category(id: "defi", name: "DeFi"),
+        ],
+        onApply: { _, _ in },
         onReset: {}
     )
 }

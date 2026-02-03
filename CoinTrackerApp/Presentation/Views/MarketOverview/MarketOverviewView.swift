@@ -9,10 +9,9 @@ enum MarketCategory: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-
-
 struct MarketOverviewView: View {
     @StateObject private var viewModel: MarketOverviewViewModel
+
     @State private var selectedCategory: MarketCategory = .top100
     @State private var searchText: String = ""
     @State private var isSwitchingCategory: Bool = false
@@ -20,17 +19,12 @@ struct MarketOverviewView: View {
     @State private var switchTask: Task<Void, Never>?
     @State private var displayedCategory: MarketCategory = .top100
 
-    init() {
-        let apiClient = APIClient()
-        let repo = MarketRowRepositoryImpl(apiClient: apiClient)
-        let useCase = GetMarketRowsUseCaseImpl(repository: repo)
-        _viewModel = StateObject(
-            wrappedValue: MarketOverviewViewModel(getMarketRows: useCase)
-        )
+    init(viewModel: MarketOverviewViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: -10) {
             Picker("Category", selection: $selectedCategory) {
                 ForEach(MarketCategory.allCases) { category in
                     Text(category.rawValue).tag(category)
@@ -39,8 +33,6 @@ struct MarketOverviewView: View {
             .pickerStyle(.segmented)
             .padding()
 
-            // We keep the search host (List) present and change content within it.
-            // This reduces search bar jumping/disappearing.
             contentList
         }
         .task {
@@ -53,7 +45,6 @@ struct MarketOverviewView: View {
     }
 
     private var contentList: some View {
-        // Resolve coins for the list without removing the list from the hierarchy.
         let coins: [MarketRow] = {
             if case .loaded(let c) = viewModel.state { return c }
             return []
@@ -67,6 +58,14 @@ struct MarketOverviewView: View {
         let shouldPaginate = selectedCategory == .top100 && searchText.isEmpty
         let thresholdIndex = max(0, filtered.count - 5)
 
+        func onRowAppear(_ index: Int) {
+            guard shouldPaginate else { return }
+            guard !isSwitchingCategory else { return }
+            guard index >= thresholdIndex else { return }
+
+            Task { await viewModel.loadNextPage(for: selectedCategory) }
+        }
+
         return ScrollViewReader { proxy in
             List {
                 MarketsListView(
@@ -75,8 +74,13 @@ struct MarketOverviewView: View {
                     shouldPaginate: shouldPaginate,
                     thresholdIndex: thresholdIndex,
                     onRetry: {
-                        Task { await viewModel.refreshMarketRows(for: selectedCategory) }
-                    }
+                        Task {
+                            await viewModel.refreshMarketRows(
+                                for: selectedCategory
+                            )
+                        }
+                    },
+                    onRowAppear: onRowAppear
                 )
             }
             .listStyle(.plain)
@@ -153,15 +157,22 @@ struct MarketOverviewView: View {
         }
     }
 
-
-
-
 }
 
 #Preview {
     NavigationStack {
-        MarketOverviewView()
-            .navigationTitle("Markets")
-            .navigationBarTitleDisplayMode(.inline)
+        MarketOverviewView(
+            viewModel: MarketOverviewViewModel(
+                store: MarketsStore(
+                    getMarketRows: GetMarketRowsUseCaseImpl(
+                        repository: MarketRowRepositoryImpl(
+                            apiClient: APIClient()
+                        )
+                    )
+                )
+            )
+        )
+        .navigationTitle("Markets")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

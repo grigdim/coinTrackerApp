@@ -15,9 +15,19 @@ struct RootTabView: View {
 
             // MARK markets path
             NavigationStack(path: $marketsPath) {
-                MarketOverviewView()
-                    .navigationTitle("Markets")
-                    .navigationBarTitleDisplayMode(.large)
+                MarketOverviewView(
+                    viewModel: MarketOverviewViewModel(
+                        store: MarketsStore(
+                            getMarketRows: GetMarketRowsUseCaseImpl(
+                                repository: MarketRowRepositoryImpl(
+                                    apiClient: APIClient()
+                                )
+                            )
+                        )
+                    )
+                )
+                .navigationTitle("Markets")
+                .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -29,9 +39,19 @@ struct RootTabView: View {
 
             // MARK search path
             NavigationStack(path: $searchPath) {
-                SearchView(MarketRow.sampleRows)
-                    .navigationTitle("Search")
-                    .navigationBarTitleDisplayMode(.large)
+                SearchView(
+                    viewModel: SearchViewModel(
+                        store: MarketsStore(
+                            getMarketRows: GetMarketRowsUseCaseImpl(
+                                repository: MarketRowRepositoryImpl(
+                                    apiClient: APIClient()
+                                )
+                            )
+                        )
+                    )
+                )
+                .navigationTitle("Search")
+                .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -41,12 +61,12 @@ struct RootTabView: View {
             }
             .tag(RootTab.search)
 
-            // MARK watchlists path
-            //            NavigationStack(path: $watchlistsPath) {
-            //                WatchlistView()
-            //                    .navigationTitle("Watchlists")
-            //                    .navigationBarTitleDisplayMode(.large)
-            //            }
+            //             MARK watchlists path
+            NavigationStack(path: $watchlistsPath) {
+                WatchlistView()
+                    .navigationTitle("Watchlists")
+                    .navigationBarTitleDisplayMode(.large)
+            }
             .tabItem {
                 Label(
                     RootTab.watchlists.title,
