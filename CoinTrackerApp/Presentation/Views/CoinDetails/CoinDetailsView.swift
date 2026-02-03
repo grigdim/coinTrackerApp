@@ -168,26 +168,6 @@ struct CoinDetailsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func contentView(for coinDetails: CoinDetails) -> some View {
-        VStack(spacing: 16) {
-            PriceHeaderView(coin: coinDetails)
-
-            StatsGridView(coin: coinDetails)
-
-            // Use the shared AlertStore from the app environment
-            PriceChartView(coinId: coinDetails.id, alertStore: env.alertStore)
-
-            AlertsSectionView(coinId: coinDetails.id)
-
-            ExpandableTextView(
-                title: coinDetails.name,
-                description: coinDetails.description
-            )
-
-            LinksSectionView(coin: coinDetails)
-        }
-    }
-
     // MARK: - Subviews
     private struct PriceHeaderView: View {
         let coin: CoinDetails
@@ -342,11 +322,12 @@ struct CoinDetailsView: View {
         private func alertTitle(_ alert: CoinPriceAlert) -> String {
             switch alert.type {
             case .above:
-                return "Price above \(formatCurrency(alert.targetPrice))"
+                return "Price above \(CurrencyFormatter.usd(alert.targetPrice))"
             case .below:
-                return "Price below \(formatCurrency(alert.targetPrice))"
+                return "Price below \(CurrencyFormatter.usd(alert.targetPrice))"
             case .percentage:
-                return "Change ±\(formatPercent(alert.targetPrice))"
+                return
+                    "Change ±\(PercentFormatter.twoDecimals(alert.targetPrice))"
             }
         }
 
@@ -363,23 +344,6 @@ struct CoinDetailsView: View {
                 parts.append("Disabled")
             }
             return parts.joined(separator: " • ")
-        }
-
-        private func formatCurrency(_ value: Double) -> String {
-            let nf = NumberFormatter()
-            nf.numberStyle = .currency
-            nf.currencyCode = "USD"
-            nf.maximumFractionDigits = 2
-            nf.minimumFractionDigits = 0
-            return nf.string(from: NSNumber(value: value)) ?? "$\(value)"
-        }
-
-        private func formatPercent(_ value: Double) -> String {
-            let nf = NumberFormatter()
-            nf.numberStyle = .decimal
-            nf.maximumFractionDigits = 2
-            nf.minimumFractionDigits = 0
-            return nf.string(from: NSNumber(value: value)) ?? "\(value)"
         }
     }
 

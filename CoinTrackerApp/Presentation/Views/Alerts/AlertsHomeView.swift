@@ -24,12 +24,10 @@ struct AlertsHomeView: View {
         }
     }
 
-
     private var groupedCoinIds: [String] {
         // Unique coinIds from active alerts, sorted
         Array(Set(alertStore.active.map { $0.coinId })).sorted()
     }
-
 
     private func sectionHeader(coinId: String) -> some View {
         HStack {
@@ -51,10 +49,10 @@ struct AlertsHomeView: View {
     private func alertRow(_ alert: CoinPriceAlert) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title(for: alert))
+                Text(alertTitle(for: alert))
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                Text(subtitle(for: alert))
+                Text(alertSubtitle(for: alert))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -82,49 +80,5 @@ struct AlertsHomeView: View {
             }
             .buttonStyle(.borderless)
         }
-    }
-
-
-    private func title(for alert: CoinPriceAlert) -> String {
-        switch alert.type {
-        case .above:
-            return "Price above \(currency(alert.targetPrice))"
-        case .below:
-            return "Price below \(currency(alert.targetPrice))"
-        case .percentage:
-            return "Change ±\(percent(alert.targetPrice))"
-        }
-    }
-
-    private func subtitle(for alert: CoinPriceAlert) -> String {
-        var parts: [String] = []
-        parts.append(
-            "Created "
-                + alert.createdAt.formatted(
-                    date: .abbreviated,
-                    time: .shortened
-                )
-        )
-        if alert.isEnabled == false {
-            parts.append("Disabled")
-        }
-        return parts.joined(separator: " • ")
-    }
-
-    private func currency(_ value: Double) -> String {
-        let nf = NumberFormatter()
-        nf.numberStyle = .currency
-        nf.currencyCode = "USD"
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-        return nf.string(from: NSNumber(value: value)) ?? "$\(value)"
-    }
-
-    private func percent(_ value: Double) -> String {
-        let nf = NumberFormatter()
-        nf.numberStyle = .decimal
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-        return nf.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 }
