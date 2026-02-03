@@ -20,9 +20,12 @@ struct PortfolioCoinSelectionView: View {
     init(portfolioViewModel: PortfolioViewModel) {
         self.portfolioViewModel = portfolioViewModel
         let apiClient = APIClient()
-        let repo = MarketRowRepositoryImpl(apiClient: apiClient)
-        let useCase = GetMarketRowsUseCaseImpl(repository: repo)
-        _marketViewModel = StateObject(wrappedValue: MarketOverviewViewModel(getMarketRows: useCase))
+        let store = MarketsStore(
+            getMarketRows: GetMarketRowsUseCaseImpl(
+                repository: MarketRowRepositoryImpl(apiClient: apiClient)
+            )
+        )
+        _marketViewModel = StateObject(wrappedValue: MarketOverviewViewModel(store: store))
     }
     
     var body: some View {
@@ -90,3 +93,4 @@ struct PortfolioCoinSelectionView: View {
         }
     }
 }
+

@@ -9,7 +9,7 @@ struct MarketGridItemView: View {
             HStack(spacing: 10) {
                 if let index {
                     Text("\(index + 1)")
-                        .font(.caption)
+                        .font(.title2)
                         .foregroundColor(.secondary)
                         .frame(minWidth: 22, alignment: .leading)
                 }
@@ -36,7 +36,7 @@ struct MarketGridItemView: View {
                         .lineLimit(1)
                 }
 
-                Spacer(minLength: 0)
+                Spacer()
             }
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -52,7 +52,7 @@ struct MarketGridItemView: View {
                 }
                 Spacer()
                 SparklineView(values: coin.sparkline)
-                    .frame(width: 60, height: 60)
+                    .frame(width: 60)
             }
 
         }
@@ -67,5 +67,4 @@ struct MarketGridItemView: View {
 
 #Preview {
     MarketGridItemView(coin: .sampleRows[0], index: 0)
-        .padding()
 }

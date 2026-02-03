@@ -6,11 +6,10 @@ struct SearchView: View {
     @State private var isShowingFilters: Bool = false
     @State private var filters: SearchFilters = .default
     @StateObject private var viewModel: SearchViewModel
+    @State private var selectedCategoryId: String = "layer-1"
 
-    init(_ marketsList: [MarketRow]) {
-        _viewModel = StateObject(
-            wrappedValue: SearchViewModel(initial: marketsList)
-        )
+    init(viewModel: SearchViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
@@ -46,11 +45,15 @@ struct SearchView: View {
             .sheet(isPresented: $isShowingFilters) {
                 SearchFiltersSheet(
                     current: filters,
-                    onApply: { newFilters in
+                    currentCategoryId: selectedCategoryId,
+                    categories: viewModel.categories,
+                    onApply: { newFilters, newCategory in
                         filters = newFilters
+                        selectedCategoryId = newCategory
                     },
                     onReset: {
                         filters = .default
+                        selectedCategoryId = "layer-1"
                     }
                 )
             }
@@ -75,9 +78,9 @@ struct SearchView: View {
                 searchText.isEmpty
                     || $0.name.localizedCaseInsensitiveContains(searchText)
             }
-                .filter { row in
-                    filters.matches(row)
-                }
+            .filter { row in
+                filters.matches(row)
+            }
 
             if filtered.isEmpty {
                 NoSearchResultsView()
@@ -93,7 +96,7 @@ struct SearchView: View {
                                 iconURL: row.iconURL
                             )
                         ) {
-                            MarketRowItemView(row: row, index: index)
+                            MarketRowItemView(row: row, onRowAppear: {})
                         }
                     }
                 }
@@ -130,6 +133,16 @@ struct SearchView: View {
 
 #Preview {
     NavigationStack {
-        SearchView(MarketRow.sampleRows)
+        SearchView(
+            viewModel: SearchViewModel(
+                store: MarketsStore(
+                    getMarketRows: GetMarketRowsUseCaseImpl(
+                        repository: MarketRowRepositoryImpl(
+                            apiClient: APIClient()
+                        )
+                    )
+                )
+            )
+        )
     }
 }

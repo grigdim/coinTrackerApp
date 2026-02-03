@@ -1,7 +1,12 @@
 import Foundation
 
 protocol MarketRowRepository {
-    func fetchMarketRows(category: MarketCategory, perPage: Int, page: Int, ids: [String]?)
+    func fetchMarketRows(
+        category: String,
+        perPage: Int,
+        page: Int,
+        ids: [String]?
+    )
         async throws -> [MarketRow]
 }
 
@@ -13,15 +18,22 @@ final class MarketRowRepositoryImpl: MarketRowRepository {
     }
 
     func fetchMarketRows(
-        category: MarketCategory,
+        category: String,
         perPage: Int,
         page: Int,
         ids: [String]? = nil
     ) async throws -> [MarketRow] {
 
         switch category {
-        case .top100, .gainers, .losers:
+        case "trending":
+            let endpoint = CoinGeckoEndpoint.trending
+            let dto: TrendingResponseDTO = try await apiClient.request(
+                endpoint: endpoint
+            )
+            return dto.coins.map { MarketRowMapper.mapTrending(dto: $0.item) }
+        default:
             let endpoint = CoinGeckoEndpoint.markets(
+                category: "layer-1",
                 perPage: perPage,
                 page: page,
                 ids: ids
@@ -31,12 +43,6 @@ final class MarketRowRepositoryImpl: MarketRowRepository {
             )
             return dtos.map(MarketRowMapper.map)
 
-        case .trending:
-            let endpoint = CoinGeckoEndpoint.trending
-            let dto: TrendingResponseDTO = try await apiClient.request(
-                endpoint: endpoint
-            )
-            return dto.coins.map { MarketRowMapper.mapTrending(dto: $0.item) }
         }
     }
 }

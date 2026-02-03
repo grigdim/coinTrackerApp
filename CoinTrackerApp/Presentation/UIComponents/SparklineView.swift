@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-/// A tiny line chart meant for coin “sparkline” previews inside rows.
-///
-/// - Takes an array of Doubles (e.g. last 7d price points)
 struct SparklineView: View {
     let values: [Double]
 
@@ -40,10 +37,10 @@ struct SparklineView: View {
                     path.addLine(to: CGPoint(x: x(i), y: y(values[i])))
                 }
             }
-            .stroke(lineWidth: 1.6)
+            .stroke(lineWidth: 0.5)
         }
-        .frame(height: 20)
-        .accessibilityHidden(true) // keep VoiceOver focused on the row data, not the sparkline
+        .frame(width: 40, height: 30)
+        .accessibilityHidden(true)  // keep VoiceOver focused on the row data, not the sparkline
     }
 }
 
