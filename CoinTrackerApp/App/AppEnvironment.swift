@@ -5,13 +5,15 @@
 //  Created by Dim Grigoriadis on 15/1/26.
 //
 
-import SwiftUI
 import Combine
+import SwiftUI
 
 @MainActor
 final class AppEnvironment: ObservableObject {
     // Strong reference so NotificationManager’s weak ref won’t be nil
-    let alertStore = AlertStore()
+    let alertStore: AlertStore
 
-    init() {}
+    init(alertStore: AlertStore) {
+        self.alertStore = alertStore
+    }
 }

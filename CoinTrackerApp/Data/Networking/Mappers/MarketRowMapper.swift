@@ -36,7 +36,8 @@ struct MarketRowMapper {
             change24hRaw: change,
             isUp: change >= 0,
 
-            sparkline: dto.sparklineIn7d?.price ?? []
+            sparkline: dto.sparklineIn7d?.price ?? [],
+            currentPriceRaw: dto.currentPrice ?? 0
         )
     }
 
@@ -82,8 +83,8 @@ struct MarketRowMapper {
             change24h: PercentFormatter.twoDecimals(change),
             change24hRaw: changeRaw,
             isUp: changeRaw >= 0,
-
-            sparkline: []
+            sparkline: [], // trending provides sparkline URL, not points
+            currentPriceRaw: 0.0
         )
     }
 }

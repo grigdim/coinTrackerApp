@@ -22,11 +22,13 @@ final class MarketOverviewViewModel: ObservableObject {
     func loadMarketRows(for category: MarketCategory) async {
         activeCategory = category
 
-        let cached = store.cachedRows(for: category)
+        let cached = store.cachedRows(for: categoryResolver(category))
         if !cached.isEmpty {
             state = .loaded(cached)
 
-            if let fetchedAtByCategory = store.fetchedAt(for: category),
+            if let fetchedAtByCategory = store.fetchedAt(
+                for: categoryResolver(category)
+            ),
                 !isStale(fetchedAtByCategory, cacheTTL: cacheTTL)
             {
                 return
@@ -59,15 +61,16 @@ final class MarketOverviewViewModel: ObservableObject {
 
         do {
             let marketRows = try await store.refresh(
-                category: category,
+                category: categoryResolver(category),
                 perPage: perPage
             )
+
             guard activeCategory == category else { return }
 
             state = .loaded(present(marketRows, for: category))
 
         } catch {
-            let cached = store.cachedRows(for: category)
+            let cached = store.cachedRows(for: categoryResolver(category))
             if !cached.isEmpty {
                 state = .loaded(cached)
             } else {
@@ -89,7 +92,7 @@ final class MarketOverviewViewModel: ObservableObject {
 
         do {
             let newRows = try await store.loadNextPage(
-                category: category,
+                category: categoryResolver(category),
                 perPage: perPage
             )
 
@@ -97,6 +100,15 @@ final class MarketOverviewViewModel: ObservableObject {
 
         } catch {
             state = .loaded(currentRows)
+        }
+    }
+
+    func categoryResolver(_ category: MarketCategory) -> String {
+        switch category {
+        case .top100, .gainers, .losers:
+            return "layer-1"
+        case .trending:
+            return "trending"
         }
     }
 

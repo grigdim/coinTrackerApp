@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct AlertsHomeView: View {
-    @EnvironmentObject var alertStore: AlertStore
+    @EnvironmentObject private var env: AppEnvironment
 
     var body: some View {
         NavigationStack {
             List {
                 ForEach(groupedCoinIds, id: \.self) { coinId in
                     Section(header: sectionHeader(coinId: coinId)) {
-                        let alerts = alertStore.alerts(coinId: coinId)
+                        let alerts = env.alertStore.alerts(coinId: coinId)
                         ForEach(alerts) { alert in
                             NavigationLink(
                                 destination: CoinAlertsDetailView(
@@ -26,7 +26,7 @@ struct AlertsHomeView: View {
 
     private var groupedCoinIds: [String] {
         // Unique coinIds from active alerts, sorted
-        Array(Set(alertStore.active.map { $0.coinId })).sorted()
+        Array(Set(env.alertStore.active.map { $0.coinId })).sorted()
     }
 
     private func sectionHeader(coinId: String) -> some View {
@@ -37,7 +37,7 @@ struct AlertsHomeView: View {
             Text(coinId)
                 .font(.headline)
             Spacer()
-            let unread = alertStore.unreadHistoryCount(coinId: coinId)
+            let unread = env.alertStore.unreadHistoryCount(coinId: coinId)
             if unread > 0 {
                 Label("\(unread)", systemImage: "bell.badge")
                     .font(.caption)
@@ -64,7 +64,7 @@ struct AlertsHomeView: View {
                 isOn: Binding(
                     get: { alert.isEnabled },
                     set: { newValue in
-                        alertStore.toggleEnabled(
+                        env.alertStore.toggleEnabled(
                             alertId: alert.id,
                             isEnabled: newValue
                         )
@@ -74,7 +74,7 @@ struct AlertsHomeView: View {
             .labelsHidden()
 
             Button(role: .destructive) {
-                alertStore.delete(alert)
+                env.alertStore.delete(alert)
             } label: {
                 Image(systemName: "trash")
             }

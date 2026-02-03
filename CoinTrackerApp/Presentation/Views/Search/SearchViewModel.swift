@@ -8,7 +8,7 @@ final class SearchViewModel: ObservableObject {
     @Published var searchText: String = ""
 
     private let store: MarketsStore
-    private var activeCategory: MarketCategory = .top100
+    private var activeCategory: String = "layer-1"
 
     private let perPage: Int = 100
     private let cacheTTL: TimeInterval = 60
@@ -17,7 +17,7 @@ final class SearchViewModel: ObservableObject {
         self.store = store
     }
 
-    func loadMarketRows(for category: MarketCategory) async {
+    func loadMarketRows(for category: String) async {
         activeCategory = category
 
         let cached = store.cachedRows(for: category)
@@ -34,7 +34,7 @@ final class SearchViewModel: ObservableObject {
         await refreshMarketRows(for: category)
     }
 
-    func refreshMarketRows(for category: MarketCategory) async {
+    func refreshMarketRows(for category: String) async {
         state = .loading
 
         do {
@@ -43,21 +43,7 @@ final class SearchViewModel: ObservableObject {
                 perPage: perPage
             )
 
-            let finalRows: [MarketRow]
-            switch category {
-            case .gainers:
-                finalRows = marketRows.sorted {
-                    $0.change24hRaw > $1.change24hRaw
-                }
-            case .losers:
-                finalRows = marketRows.sorted {
-                    $0.change24hRaw < $1.change24hRaw
-                }
-            default:
-                finalRows = marketRows
-            }
-
-            state = .loaded(finalRows)
+            state = .loaded(marketRows)
 
         } catch {
             let cached = store.cachedRows(for: category)

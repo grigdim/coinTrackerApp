@@ -74,20 +74,6 @@ struct CoinAlertsHistoryView: View {
 
     }
 
-    private func title(for alert: CoinPriceAlert) -> String {
-
-        switch alert.type {
-
-        case .above: return "Price above \(currency(alert.targetPrice))"
-
-        case .below: return "Price below \(currency(alert.targetPrice))"
-
-        case .percentage: return "Change ±\(percent(alert.targetPrice))"
-
-        }
-
-    }
-
     private func historySubtitle(for alert: CoinPriceAlert) -> String {
 
         var parts: [String] = []
@@ -103,31 +89,6 @@ struct CoinAlertsHistoryView: View {
         if alert.isUnread { parts.append("Unread") }
 
         return parts.joined(separator: " • ")
-
-    }
-
-    private func currency(_ value: Double) -> String {
-
-        let nf = NumberFormatter()
-        nf.numberStyle = .currency
-        nf.currencyCode = "USD"
-
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-
-        return nf.string(from: NSNumber(value: value)) ?? "$\(value)"
-
-    }
-
-    private func percent(_ value: Double) -> String {
-
-        let nf = NumberFormatter()
-        nf.numberStyle = .decimal
-
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-
-        return nf.string(from: NSNumber(value: value)) ?? "\(value)"
 
     }
 

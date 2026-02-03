@@ -9,9 +9,10 @@ import Foundation
 
 protocol GetMarketRowsUseCase {
     func execute(
-        category: MarketCategory,
+        category: String,
         perPage: Int,
-        page: Int
+        page: Int,
+        ids: [String]?
     ) async throws -> [MarketRow]
 }
 
@@ -23,14 +24,16 @@ final class GetMarketRowsUseCaseImpl: GetMarketRowsUseCase {
     }
 
     func execute(
-        category: MarketCategory,
+        category: String,
         perPage: Int,
-        page: Int
+        page: Int,
+        ids: [String]? = nil
     ) async throws -> [MarketRow] {
         try await repository.fetchMarketRows(
             category: category,
             perPage: perPage,
-            page: page
+            page: page,
+            ids: ids
         )
     }
 }

@@ -10,13 +10,13 @@ import Foundation
 
 @MainActor
 final class MarketsStore: ObservableObject {
-    @Published private(set) var rowsByCategory: [MarketCategory: [MarketRow]] =
+    @Published private(set) var rowsByCategory: [String: [MarketRow]] =
         [:]
-    @Published private(set) var fetchedAtByCategory: [MarketCategory: Date] =
+    @Published private(set) var fetchedAtByCategory: [String: Date] =
         [:]
 
-    private var lastPageByCategory: [MarketCategory: Int] = [:]
-    private var inFlightNextPage: Set<MarketCategory> = []
+    private var lastPageByCategory: [String: Int] = [:]
+    private var inFlightNextPage: Set<String> = []
 
     private let getMarketRows: GetMarketRowsUseCase
 
@@ -24,22 +24,23 @@ final class MarketsStore: ObservableObject {
         self.getMarketRows = getMarketRows
     }
 
-    func cachedRows(for category: MarketCategory) -> [MarketRow] {
+    func cachedRows(for category: String) -> [MarketRow] {
         rowsByCategory[category] ?? []
     }
 
-    func fetchedAt(for category: MarketCategory) -> Date? {
+    func fetchedAt(for category: String) -> Date? {
         fetchedAtByCategory[category]
     }
 
-    func refresh(category: MarketCategory, perPage: Int) async throws
+    func refresh(category: String, perPage: Int) async throws
         -> [MarketRow]
     {
         let page = 1
         let rows = try await getMarketRows.execute(
             category: category,
             perPage: perPage,
-            page: page
+            page: page,
+            ids: nil
         )
 
         rowsByCategory[category] = rows
@@ -48,7 +49,7 @@ final class MarketsStore: ObservableObject {
         return rows
     }
 
-    func loadNextPage(category: MarketCategory, perPage: Int) async throws
+    func loadNextPage(category: String, perPage: Int) async throws
         -> [MarketRow]
     {
         guard !inFlightNextPage.contains(category) else {
@@ -61,7 +62,8 @@ final class MarketsStore: ObservableObject {
         let newRows = try await getMarketRows.execute(
             category: category,
             perPage: perPage,
-            page: nextPage
+            page: nextPage,
+            ids: nil
         )
 
         // merge + dedupe by id

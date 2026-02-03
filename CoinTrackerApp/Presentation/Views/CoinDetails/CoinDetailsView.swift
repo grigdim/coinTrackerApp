@@ -9,7 +9,7 @@ import Combine
 import SwiftUI
 
 // MARK: - Route Model
-struct CoinDetailsRoute: Hashable {
+struct CoinDetailsRoute: Hashable, Identifiable {
     let id: String
     let name: String
     let iconURL: URL?
@@ -111,6 +111,9 @@ struct CoinDetailsView: View {
                     alertStore: env.alertStore
                 )
 
+                AlertsSectionView(coinId: coinDetails.id)
+                    .environmentObject(env)
+
                 ExpandableTextView(
                     title: coinDetails.name,
                     description: coinDetails.description
@@ -211,13 +214,13 @@ struct CoinDetailsView: View {
 
     private struct AlertsSectionView: View {
         let coinId: String
-        @EnvironmentObject var alertStore: AlertStore  // Changed to observe AlertStore directly
+        @EnvironmentObject private var env: AppEnvironment
         @State private var showingCreateAlert = false
 
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
-                let alerts = alertStore.alerts(coinId: coinId)
-                let unread = alertStore.unreadHistoryCount(coinId: coinId)
+                let alerts = env.alertStore.alerts(coinId: coinId)
+                let unread = env.alertStore.unreadHistoryCount(coinId: coinId)
 
                 HStack {
                     Text("Alerts")
@@ -264,7 +267,7 @@ struct CoinDetailsView: View {
                                     isOn: Binding(
                                         get: { alert.isEnabled },
                                         set: { newValue in
-                                            alertStore.toggleEnabled(
+                                            env.alertStore.toggleEnabled(
                                                 alertId: alert.id,
                                                 isEnabled: newValue
                                             )
@@ -274,7 +277,7 @@ struct CoinDetailsView: View {
                                 .labelsHidden()
 
                                 Button(role: .destructive) {
-                                    alertStore.delete(alert)
+                                    env.alertStore.delete(alert)
                                 } label: {
                                     Image(systemName: "trash")
                                 }
@@ -303,19 +306,19 @@ struct CoinDetailsView: View {
                 .padding(.top, 4)
             }
             .onAppear {
-                let alerts = alertStore.alerts(coinId: coinId)
+                let alerts = env.alertStore.alerts(coinId: coinId)
                 print(
                     "AlertsSectionView alertStore:",
-                    ObjectIdentifier(alertStore).hashValue,
+                    ObjectIdentifier(env.alertStore).hashValue,
                     "active:",
-                    alertStore.active.count,
+                    env.alertStore.active.count,
                     "filtered:",
                     alerts.count,
                     "coinId:",
                     coinId
                 )
             }.sheet(isPresented: $showingCreateAlert) {
-                NewAlertModal(coinId: coinId, alertStore: alertStore)
+                NewAlertModal(coinId: coinId, alertStore: env.alertStore)
             }
         }
 
@@ -376,6 +379,6 @@ struct CoinDetailsView: View {
             )
         )
     }
-    .environmentObject(AppEnvironment())
-    .environmentObject(AppEnvironment().alertStore)  // Ensure preview also injects AlertStore
+    .environmentObject(AppEnvironment(alertStore: AlertStore()))
+    .environmentObject(AlertStore())
 }
