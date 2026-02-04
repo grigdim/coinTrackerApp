@@ -12,7 +12,10 @@ struct SearchScreen: View {
 
     var body: some View {
         SearchView(
-            viewModel: SearchViewModel(store: stores.markets)
+            viewModel: SearchViewModel(
+                marketsStore: stores.markets,
+                categoriesStore: stores.categories
+            )
         )
     }
 }

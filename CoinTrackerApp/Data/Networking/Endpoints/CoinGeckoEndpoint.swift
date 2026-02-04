@@ -34,7 +34,7 @@ enum CoinGeckoEndpoint {
         case .markets(let category, let perPage, let page, let ids):
             var query: [URLQueryItem] = [
                 URLQueryItem(name: "vs_currency", value: "usd"),
-                URLQueryItem(name: "market_category", value: "\(category)"),
+                URLQueryItem(name: "category", value: "\(category)"),
                 URLQueryItem(name: "per_page", value: "\(perPage)"),
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "sparkline", value: "true"),

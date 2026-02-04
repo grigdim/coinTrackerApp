@@ -206,6 +206,14 @@ struct SearchFiltersSheet: View {
                         }
                     }
                 }
+                .onAppear {
+                    if !categories.contains(where: { $0.id == draft.categoryId }
+                    ),
+                        let first = categories.first
+                    {
+                        draft.categoryId = first.id
+                    }
+                }
             }
             .navigationTitle("Filters")
             .toolbar {

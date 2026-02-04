@@ -7,24 +7,30 @@ final class SearchViewModel: ObservableObject {
     @Published private(set) var categories: [Category] = []
     @Published var searchText: String = ""
 
-    private let store: MarketsStore
+    private let marketsStore: MarketsStore
+    private let categoriesStore: CategoriesStore
     private var activeCategory: String = "layer-1"
 
-    private let perPage: Int = 100
+    private let perPage: Int = 20
     private let cacheTTL: TimeInterval = 60
 
-    init(store: MarketsStore) {
-        self.store = store
+    init(marketsStore: MarketsStore, categoriesStore: CategoriesStore) {
+        self.marketsStore = marketsStore
+        self.categoriesStore = categoriesStore
+
+        categoriesStore.$categories.receive(on: DispatchQueue.main).assign(
+            to: &$categories
+        )
     }
 
     func loadMarketRows(for category: String) async {
         activeCategory = category
 
-        let cached = store.cachedRows(for: category)
+        let cached = marketsStore.cachedRows(for: category)
         if !cached.isEmpty {
             state = .loaded(cached)
 
-            if let fetchedAtByCategory = store.fetchedAt(for: category),
+            if let fetchedAtByCategory = marketsStore.fetchedAt(for: category),
                 !isStale(fetchedAtByCategory, cacheTTL: cacheTTL)
             {
                 return
@@ -35,20 +41,22 @@ final class SearchViewModel: ObservableObject {
     }
 
     func refreshMarketRows(for category: String) async {
+        activeCategory = category
         state = .loading
 
         do {
-            let marketRows = try await store.refresh(
+            let marketRows = try await marketsStore.refresh(
                 category: category,
                 perPage: perPage
             )
 
+            guard activeCategory == category else { return }
+
             state = .loaded(marketRows)
 
         } catch {
-            let cached = store.cachedRows(for: category)
+            let cached = marketsStore.cachedRows(for: category)
             if !cached.isEmpty {
-                // Keep showing cached data if refresh fails
                 state = .loaded(cached)
             } else {
                 state = .failed(error)
@@ -56,4 +64,27 @@ final class SearchViewModel: ObservableObject {
         }
     }
 
+    func loadNextPage(for category: String) async {
+        guard activeCategory == category else { return }
+        guard case .loaded(let currentRows) = state else { return }
+        guard !isLoadingNextPage else { return }
+
+        isLoadingNextPage = true
+        defer {
+            isLoadingNextPage = false
+        }
+
+        do {
+            let newRows = try await marketsStore.loadNextPage(
+                category: category,
+                perPage: perPage
+            )
+            guard activeCategory == category else { return }
+            state = .loaded(newRows)
+
+        } catch {
+            guard activeCategory == category else { return }
+            state = .loaded(currentRows)
+        }
+    }
 }
