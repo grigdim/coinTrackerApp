@@ -2,17 +2,13 @@ import SwiftUI
 
 struct MarketGridItemView: View {
     let coin: MarketRow
-    let index: Int?
+    let onAppear: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                if let index {
-                    Text("\(index + 1)")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                        .frame(minWidth: 22, alignment: .leading)
-                }
+            HStack {
+
+                Spacer()
 
                 AsyncImage(url: coin.iconURL) { phase in
                     switch phase {
@@ -62,9 +58,11 @@ struct MarketGridItemView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color.gray.opacity(0.10))
         )
+        .id(coin.id)
+        .onAppear(perform: onAppear)
     }
 }
 
 #Preview {
-    MarketGridItemView(coin: .sampleRows[0], index: 0)
+    MarketGridItemView(coin: .sampleRows[0]) {}
 }

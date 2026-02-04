@@ -71,8 +71,6 @@ struct MarketOverviewView: View {
                 MarketsListView(
                     state: viewModel.state,
                     searchText: searchText,
-                    shouldPaginate: shouldPaginate,
-                    thresholdIndex: thresholdIndex,
                     onRetry: {
                         Task {
                             await viewModel.refreshMarketRows(
@@ -82,6 +80,15 @@ struct MarketOverviewView: View {
                     },
                     onRowAppear: onRowAppear
                 )
+
+                if shouldPaginate && viewModel.isLoadingNextPage {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .listRowSeparator(.hidden)
+                }
             }
             .listStyle(.plain)
             .coordinateSpace(name: "marketScrolled")
@@ -100,7 +107,6 @@ struct MarketOverviewView: View {
 
                 let visible = offsets.filter { $0.value >= 0 }
                 if let topMost = visible.min(by: { $0.value < $1.value })?.key {
-
                     viewModel.saveScrolledAnchor(
                         for: displayedCategory,
                         id: topMost
@@ -108,11 +114,10 @@ struct MarketOverviewView: View {
                 }
             }
             .onChange(of: selectedCategory) { newValue in
-                // Cancel any in-flight switch task so only the latest selection wins
                 switchTask?.cancel()
 
                 switchTask = Task {
-                    // 1) Save anchor for the category currently displayed BEFORE switching
+                    // Save anchor for currently displayed category
                     let visible = latestOffsets.filter { $0.value >= 0 }
                     if let topMost = visible.min(by: { $0.value < $1.value })?
                         .key
@@ -125,26 +130,22 @@ struct MarketOverviewView: View {
 
                     isSwitchingCategory = true
                     defer {
-                        // allow saving again after a brief settle
                         Task { @MainActor in
                             try? await Task.sleep(nanoseconds: 100_000_000)
                             isSwitchingCategory = false
                         }
                     }
 
-                    // 2) Load data for the new category
                     await viewModel.loadMarketRows(for: newValue)
                     guard !Task.isCancelled else { return }
                     guard selectedCategory == newValue else { return }
 
-                    // 3) Update displayedCategory only once data is now the source of truth
                     displayedCategory = newValue
 
-                    // 4) Yield so the list lays out
+                    // Let list lay out, then restore scroll anchor
                     try? await Task.sleep(nanoseconds: 50_000_000)
                     guard !Task.isCancelled else { return }
 
-                    // 5) Restore anchor or fallback to first row (Fix A)
                     if let anchor = viewModel.scrollToAnchor(for: newValue) {
                         proxy.scrollTo(anchor, anchor: .top)
                     } else if case .loaded(let coins) = viewModel.state,
@@ -156,7 +157,6 @@ struct MarketOverviewView: View {
             }
         }
     }
-
 }
 
 #Preview {

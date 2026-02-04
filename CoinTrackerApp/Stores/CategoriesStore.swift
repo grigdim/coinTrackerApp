@@ -13,7 +13,6 @@ final class CategoriesStore: ObservableObject {
     @Published private(set) var isLoading: Bool = false
 
     private var hasLoadedOnce = false
-
     private let getCategories: GetCategoriesUseCase
 
     init(getCategories: GetCategoriesUseCase) {

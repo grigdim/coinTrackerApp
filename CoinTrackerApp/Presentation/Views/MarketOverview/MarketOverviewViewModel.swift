@@ -31,6 +31,7 @@ final class MarketOverviewViewModel: ObservableObject {
             ),
                 !isStale(fetchedAtByCategory, cacheTTL: cacheTTL)
             {
+                state = .loaded(present(cached, for: category))
                 return
             }
         }
@@ -43,13 +44,13 @@ final class MarketOverviewViewModel: ObservableObject {
     {
         switch category {
         case .gainers:
-            return rows.sorted {
-                $0.change24hRaw > $1.change24hRaw
-            }
+            return Array(
+                rows.sorted { $0.change24hRaw > $1.change24hRaw }.prefix(10)
+            )
         case .losers:
-            return rows.sorted {
-                $0.change24hRaw < $1.change24hRaw
-            }
+            return Array(
+                rows.sorted { $0.change24hRaw < $1.change24hRaw }.prefix(10)
+            )
         default:
             return rows
         }
@@ -60,9 +61,12 @@ final class MarketOverviewViewModel: ObservableObject {
         state = .loading
 
         do {
+            let effectivePerPage =
+                (category == .gainers || category == .losers) ? 250 : perPage
+
             let marketRows = try await store.refresh(
                 category: categoryResolver(category),
-                perPage: perPage
+                perPage: effectivePerPage
             )
 
             guard activeCategory == category else { return }
@@ -72,7 +76,7 @@ final class MarketOverviewViewModel: ObservableObject {
         } catch {
             let cached = store.cachedRows(for: categoryResolver(category))
             if !cached.isEmpty {
-                state = .loaded(cached)
+                state = .loaded(present(cached, for: category))
             } else {
                 state = .failed(error)
             }
@@ -95,10 +99,11 @@ final class MarketOverviewViewModel: ObservableObject {
                 category: categoryResolver(category),
                 perPage: perPage
             )
-
+            guard activeCategory == category else { return }
             state = .loaded(newRows)
 
         } catch {
+            guard activeCategory == category else { return }
             state = .loaded(currentRows)
         }
     }
@@ -108,7 +113,7 @@ final class MarketOverviewViewModel: ObservableObject {
         case .top100, .gainers, .losers:
             return "layer-1"
         case .trending:
-            return "trending"
+            return "Trending"
         }
     }
 

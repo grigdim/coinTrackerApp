@@ -2,8 +2,7 @@ import SwiftUI
 
 struct MarketRowItemView: View {
     let row: MarketRow
-    let onRowAppear: () -> Void
-    var index: Int = 0
+    let onAppear: () -> Void
     // Coordinate space name used to compute row offset for scroll tracking
     var coordinateSpaceName: String = "marketScrolled"
     // Whether to emit RowOffsetKey preference values
@@ -30,11 +29,9 @@ struct MarketRowItemView: View {
                 }
             )
             .id(row.id)
-            .onAppear {
-                onRowAppear()
-            }
+            .onAppear(perform: onAppear)
     }
 }
 #Preview {
-    MarketRowItemView(row: MarketRow.sampleRows[0], onRowAppear: {})
+    MarketRowItemView(row: MarketRow.sampleRows[0], onAppear: {})
 }

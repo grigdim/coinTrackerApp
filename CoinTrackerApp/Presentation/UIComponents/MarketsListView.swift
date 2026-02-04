@@ -2,12 +2,10 @@ import SwiftUI
 
 struct MarketsListView: View {
     let state: ViewState<[MarketRow]>
-
     let searchText: String
-    let shouldPaginate: Bool?
-    let thresholdIndex: Int?
 
     let onRetry: () -> Void
+    /// Called with the row index *in the filtered array* when that row appears.
     let onRowAppear: (Int) -> Void
 
     var body: some View {
@@ -18,8 +16,8 @@ struct MarketsListView: View {
         case .failed(let error):
             LoadingErrorView(error: error, onRetry: onRetry)
 
-        case .loaded(let coins):
-            loadedRows(marketRows: coins)
+        case .loaded(let rows):
+            loadedRows(rows)
         }
     }
 
@@ -33,8 +31,8 @@ struct MarketsListView: View {
     }
 
     @ViewBuilder
-    private func loadedRows(marketRows: [MarketRow]) -> some View {
-        let filtered = marketRows.filter {
+    private func loadedRows(_ rows: [MarketRow]) -> some View {
+        let filtered = rows.filter {
             searchText.isEmpty
                 || $0.name.localizedCaseInsensitiveContains(searchText)
         }
@@ -48,10 +46,9 @@ struct MarketsListView: View {
                 )
             ) {
                 MarketRowItemView(
-                    row: row
-                ) {
-                    onRowAppear(index)
-                }
+                    row: row,
+                    onAppear: { onRowAppear(index) }
+                )
             }
         }
     }

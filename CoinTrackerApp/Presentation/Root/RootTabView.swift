@@ -15,19 +15,9 @@ struct RootTabView: View {
 
             // MARK markets path
             NavigationStack(path: $marketsPath) {
-                MarketOverviewView(
-                    viewModel: MarketOverviewViewModel(
-                        store: MarketsStore(
-                            getMarketRows: GetMarketRowsUseCaseImpl(
-                                repository: MarketRowRepositoryImpl(
-                                    apiClient: APIClient()
-                                )
-                            )
-                        )
-                    )
-                )
-                .navigationTitle("Markets")
-                .navigationBarTitleDisplayMode(.large)
+                MarketOverviewScreen()
+                    .navigationTitle("Markets")
+                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -39,19 +29,9 @@ struct RootTabView: View {
 
             // MARK search path
             NavigationStack(path: $searchPath) {
-                SearchView(
-                    viewModel: SearchViewModel(
-                        store: MarketsStore(
-                            getMarketRows: GetMarketRowsUseCaseImpl(
-                                repository: MarketRowRepositoryImpl(
-                                    apiClient: APIClient()
-                                )
-                            )
-                        )
-                    )
-                )
-                .navigationTitle("Search")
-                .navigationBarTitleDisplayMode(.large)
+                SearchScreen()
+                    .navigationTitle("Search")
+                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(

@@ -7,6 +7,7 @@ struct SearchView: View {
     @State private var filters: SearchFilters = .default
     @StateObject private var viewModel: SearchViewModel
     @State private var selectedCategoryId: String = "layer-1"
+    @State private var isSwitchingCategory: Bool = false
 
     init(viewModel: SearchViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -14,6 +15,11 @@ struct SearchView: View {
 
     var body: some View {
         content
+            .task(id: selectedCategoryId) {
+                isSwitchingCategory = true
+                defer { isSwitchingCategory = false }
+                await viewModel.loadMarketRows(for: selectedCategoryId)
+            }
             .searchable(text: $searchText, prompt: "Search markets")
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
@@ -47,9 +53,9 @@ struct SearchView: View {
                     current: filters,
                     currentCategoryId: selectedCategoryId,
                     categories: viewModel.categories,
-                    onApply: { newFilters, newCategory in
+                    onApply: { newFilters, newCategoryId in
                         filters = newFilters
-                        selectedCategoryId = newCategory
+                        selectedCategoryId = newCategoryId
                     },
                     onReset: {
                         filters = .default
@@ -82,10 +88,14 @@ struct SearchView: View {
                 filters.matches(row)
             }
 
+            let shouldPaginate = searchText.isEmpty && !isSwitchingCategory
+            let thresholdIndex = max(0, filtered.count - 5)
+
             if filtered.isEmpty {
                 NoSearchResultsView()
             } else if isListMode {
                 List {
+                    // Render the list directly to avoid double-filtering + index mismatch
                     ForEach(Array(filtered.enumerated()), id: \.element.id) {
                         index,
                         row in
@@ -96,12 +106,33 @@ struct SearchView: View {
                                 iconURL: row.iconURL
                             )
                         ) {
-                            MarketRowItemView(row: row, onRowAppear: {})
+                            MarketRowItemView(row: row) {
+                                guard shouldPaginate else { return }
+                                guard index >= thresholdIndex else { return }
+                                guard !viewModel.isLoadingNextPage else {
+                                    return
+                                }
+                                Task {
+                                    await viewModel.loadNextPage(
+                                        for: selectedCategoryId
+                                    )
+                                }
+                            }
                         }
                     }
-                }
-                .listStyle(.plain)
 
+                    if shouldPaginate, viewModel.isLoadingNextPage {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .listRowSeparator(.hidden)
+                    }
+                }
+                .refreshable {
+                    await viewModel.refreshMarketRows(for: selectedCategoryId)
+                }
             } else {
                 ScrollView {
                     LazyVGrid(
@@ -119,12 +150,28 @@ struct SearchView: View {
                                     iconURL: row.iconURL
                                 )
                             ) {
-                                MarketGridItemView(coin: row, index: index)
+                                MarketGridItemView(coin: row) {
+                                    guard shouldPaginate else { return }
+                                    guard index >= thresholdIndex else {
+                                        return
+                                    }
+                                    guard !viewModel.isLoadingNextPage else {
+                                        return
+                                    }
+                                    Task {
+                                        await viewModel.loadNextPage(
+                                            for: selectedCategoryId
+                                        )
+                                    }
+                                }
                             }
                             .buttonStyle(.plain)
                         }
                     }
                     .padding(12)
+                }
+                .refreshable {
+                    await viewModel.refreshMarketRows(for: selectedCategoryId)
                 }
             }
         }
@@ -135,9 +182,16 @@ struct SearchView: View {
     NavigationStack {
         SearchView(
             viewModel: SearchViewModel(
-                store: MarketsStore(
+                marketsStore: MarketsStore(
                     getMarketRows: GetMarketRowsUseCaseImpl(
                         repository: MarketRowRepositoryImpl(
+                            apiClient: APIClient()
+                        )
+                    )
+                ),
+                categoriesStore: CategoriesStore(
+                    getCategories: GetCategoriesUseCaseImpl(
+                        repository: CategoriesRepositoryImpl(
                             apiClient: APIClient()
                         )
                     )
