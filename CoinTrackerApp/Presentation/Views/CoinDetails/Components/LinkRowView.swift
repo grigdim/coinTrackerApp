@@ -12,42 +12,67 @@ struct LinkRowView: View {
     let url: URL?
 
     var body: some View {
-        if let url {
-            Link(destination: url) {
-                rowContent(trailingText: url.host ?? url.absoluteString)
+        Group {
+            if let url {
+                Link(destination: url) {
+                    rowContent(
+                        trailingText: displayHost(for: url),
+                        isEnabled: true
+                    )
+                }
+            } else {
+                rowContent(
+                    trailingText: "Not available",
+                    isEnabled: false
+                )
             }
-        } else {
-            rowContent(trailingText: "Not available")
-                .foregroundColor(.secondary)
         }
     }
 
-    private func rowContent(trailingText: String) -> some View {
-        HStack {
-            Text(title)
+    private func rowContent(
+        trailingText: String,
+        isEnabled: Bool
+    ) -> some View {
+        HStack(spacing: 12) {
 
-            Spacer()
+            Text(title)
+                .foregroundColor(.primary)
+
+            Spacer(minLength: 8)
 
             Text(trailingText)
                 .lineLimit(1)
                 .truncationMode(.middle)
-                .foregroundColor(.blue)
+                .font(.subheadline)
+                .foregroundColor(
+                    isEnabled ? .accentColor : .secondary
+                )
 
             Image(systemName: "chevron.right")
-                .foregroundColor(.secondary)
-                .font(.caption)
+                .font(.footnote)
+                .foregroundColor(Color(.tertiaryLabel))
+                .opacity(isEnabled ? 1 : 0.4)
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())  // full row tappable
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.gray.opacity(0.08))
+                .fill(Color(.secondarySystemBackground))
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            isEnabled
+                ? "\(title), opens link"
+                : "\(title), not available"
+        )
+    }
+
+    private func displayHost(for url: URL) -> String {
+        if let host = url.host {
+            return host.replacingOccurrences(of: "www.", with: "")
+        }
+        return url.absoluteString
     }
 }
 
-#Preview {
-    LinkRowView(
-        title: "Website",
-        url: URL(string: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png")
-    )
-}

@@ -1,10 +1,3 @@
-//
-//  MarketOverviewScreen.swift
-//  CoinTrackerApp
-//
-//  Created by Dim Grigoriadis on 30/1/26.
-//
-
 import SwiftUI
 
 struct MarketOverviewScreen: View {
@@ -14,5 +7,7 @@ struct MarketOverviewScreen: View {
         MarketOverviewView(
             viewModel: MarketOverviewViewModel(store: stores.markets)
         )
+        .navigationTitle("Markets")
+        .navigationBarTitleDisplayMode(.large)
     }
 }

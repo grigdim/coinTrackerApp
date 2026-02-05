@@ -13,11 +13,8 @@ struct RootTabView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
 
-            // MARK markets path
             NavigationStack(path: $marketsPath) {
                 MarketOverviewScreen()
-                    .navigationTitle("Markets")
-                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -27,11 +24,8 @@ struct RootTabView: View {
             }
             .tag(RootTab.markets)
 
-            // MARK search path
             NavigationStack(path: $searchPath) {
                 SearchScreen()
-                    .navigationTitle("Search")
-                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -41,11 +35,8 @@ struct RootTabView: View {
             }
             .tag(RootTab.search)
 
-            //             MARK watchlists path
             NavigationStack(path: $watchlistsPath) {
                 WatchlistView()
-                    .navigationTitle("Watchlists")
-                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -55,11 +46,8 @@ struct RootTabView: View {
             }
             .tag(RootTab.watchlists)
 
-            // MARK portfolio path
             NavigationStack(path: $portfolioPath) {
                 PortfolioView()
-                    .navigationTitle("Portfolio")
-                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -69,11 +57,8 @@ struct RootTabView: View {
             }
             .tag(RootTab.portfolio)
 
-            // MARK alerts path
             NavigationStack(path: $alertsPath) {
                 AlertsHomeView()
-                    .navigationTitle("Alerts")
-                    .navigationBarTitleDisplayMode(.large)
             }
             .tabItem {
                 Label(
@@ -83,16 +68,25 @@ struct RootTabView: View {
             }
             .tag(RootTab.alerts)
         }
+        // Optional: set app accent color for the tab bar + nav buttons
+//        .tint(.accentColor)
     }
 }
 
 #Preview {
-    let stores = AppStores()
+    RootTabPreviewHost()
+}
 
-    return RootTabView()
-        .environmentObject(stores)
-        .environmentObject(AppEnvironment(alertStore: AlertStore()))
-        .task {
-            await stores.categories.loadIfNeeded()
-        }
+private struct RootTabPreviewHost: View {
+    @StateObject private var stores = AppStores()
+    @StateObject private var env = AppEnvironment(alertStore: AlertStore())
+
+    var body: some View {
+        RootTabView()
+            .environmentObject(stores)
+            .environmentObject(env)
+            .task {
+                await stores.categories.loadIfNeeded()
+            }
+    }
 }

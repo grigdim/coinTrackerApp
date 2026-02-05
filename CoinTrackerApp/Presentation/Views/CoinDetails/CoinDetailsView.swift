@@ -17,19 +17,13 @@ struct CoinDetailsRoute: Hashable, Identifiable {
 
 // MARK: - Main View
 struct CoinDetailsView: View {
-    // 1. Existing ViewModel for API Data
     @StateObject private var viewModel: CoinDetailsViewModel
-    @State private var showingCreateAlert = false
     @EnvironmentObject private var env: AppEnvironment
 
-    // 2. ViewModel for User Data (Watchlists/Persistence)
     @StateObject private var watchlistsViewModel = WatchlistsViewModel()
 
     let route: CoinDetailsRoute
 
-    @State private var selectedChartRange: ChartRange = .day
-
-    // 3. State to control the "Add to Watchlist" sheet
     @State private var showAddSheet = false
 
     // Dependency Injection
@@ -43,154 +37,230 @@ struct CoinDetailsView: View {
         self.route = route
     }
 
-    private let gridColumns: [GridItem] = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12),
-    ]
-
     var body: some View {
         Group {
             switch viewModel.state {
             case .idle, .loading:
-                HStack {
-                    Spacer()
-                    ProgressView("Loading…")
-                    Spacer()
-                }
-                .padding(.vertical, 50)
+                loadingState
 
             case .failed(let error):
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 40))
-                        .foregroundColor(.orange)
-
-                    Text("Couldn’t load markets").font(.headline)
-                    Text(error.localizedDescription)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-
-                    Button("Retry") {
-                        Task {
-                            await viewModel.refreshCoinDetails(for: route.id)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .listRowSeparator(.hidden)
+                errorState(error)
 
             case .loaded(let viewData):
-                // 4. Content View
                 contentView(for: viewData)
-
             }
         }
         .task(id: route.id) {
-            // Load API Data
             await viewModel.loadCoinDetails(for: route.id)
-            // 6. Load User Data (so we know if the heart should be filled)
             watchlistsViewModel.loadData()
-            // Do not rewire NotificationManager here; it’s done at app root.
         }
         .refreshable {
             await viewModel.refreshCoinDetails(for: route.id)
         }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { toolbarContent }
     }
+
+    // MARK: - Content
 
     private func contentView(for coinDetails: CoinDetails) -> some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: 18) {
                 PriceHeaderView(coin: coinDetails)
 
-                StatsGridView(coin: coinDetails)
+                section {
+                    StatsGridView(coin: coinDetails)
+                }
 
-                PriceChartView(
-                    coinId: coinDetails.id,
-                    alertStore: env.alertStore
-                )
+                section {
+                    PriceChartView(
+                        coinId: coinDetails.id,
+                        alertStore: env.alertStore
+                    )
+                }
 
-                AlertsSectionView(coinId: coinDetails.id)
-                    .environmentObject(env)
+                section {
+                    ExpandableTextView(
+                        title: coinDetails.name,
+                        description: coinDetails.description
+                    )
+                }
 
-                ExpandableTextView(
-                    title: coinDetails.name,
-                    description: coinDetails.description
-                )
+                section {
+                    AlertsSectionView(coinId: coinDetails.id)
+                }
 
-                LinksSectionView(coin: coinDetails)
+                section {
+                    LinksSectionView(coin: coinDetails)
+                }
+
+                Spacer(minLength: 22)
             }
-            .sheet(isPresented: $showAddSheet) {
-                AddToWatchlistView(
-                    viewModel: watchlistsViewModel,
-                    coin: coinDetails
-                )
-                .presentationDetents([.medium])
-            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .padding(.bottom, 28)  // key for tab bar overlap on iOS 16
         }
         .scrollIndicators(.hidden)
-        .padding(.horizontal)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                HStack(spacing: 8) {
-                    AsyncImage(url: route.iconURL) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image.resizable().scaledToFit()
-                        case .empty:
-                            ProgressView()
-                        default:
-                            Image(systemName: "bitcoinsign.circle")
-                        }
-                    }
-                    .frame(width: 40, height: 40)
-
-                    Text(route.name)
-                        .font(.title)
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showAddSheet = true
-                } label: {
-                    // Check if coin exists in ANY watchlist to determine icon state
-                    let isSaved = watchlistsViewModel.watchlists.contains {
-                        list in
-                        list.coins.contains { $0.id == route.id }
-                    }
-
-                    Image(systemName: isSaved ? "heart.fill" : "heart")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundColor(isSaved ? .red : .primary)
-                }
-            }
+        .sheet(isPresented: $showAddSheet) {
+            AddToWatchlistView(
+                viewModel: watchlistsViewModel,
+                coin: coinDetails
+            )
+            .presentationDetents([.medium])
         }
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // MARK: - States
+
+    private var loadingState: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+            Text("Loading…")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 40)
+    }
+
+    private func errorState(_ error: Error) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 38))
+                .foregroundColor(.orange)
+
+            Text("Couldn’t load coin")
+                .font(.headline)
+
+            Text(error.localizedDescription)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button("Retry") {
+                Task { await viewModel.refreshCoinDetails(for: route.id) }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 40)
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            ToolbarTitleView(
+                title: route.name,
+                iconURL: route.iconURL
+            )
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showAddSheet = true
+            } label: {
+                let isSaved = watchlistsViewModel.watchlists.contains { list in
+                    list.coins.contains { $0.id == route.id }
+                }
+
+                Image(systemName: isSaved ? "heart.fill" : "heart")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundColor(isSaved ? .red : .primary)
+            }
+            .accessibilityLabel("Add to watchlist")
+        }
+    }
+
+    // MARK: - Helpers (UI)
+
+    private func section<Content: View>(@ViewBuilder _ content: () -> Content)
+        -> some View
+    {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Subviews
+
+    private struct ToolbarTitleView: View {
+        let title: String
+        let iconURL: URL?
+
+        var body: some View {
+            HStack(spacing: 8) {
+                AsyncImage(url: iconURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                    default:
+                        Image(systemName: "bitcoinsign.circle")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                // Match nav bar symbol sizing better than 40x40 for inline mode
+                .frame(width: 22, height: 22)
+                .accessibilityHidden(true)
+
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+        }
+    }
+
     private struct PriceHeaderView: View {
         let coin: CoinDetails
 
         var body: some View {
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 Text(coin.price)
-                    .font(.largeTitle)
+                    .font(.system(.largeTitle, design: .rounded))
                     .fontWeight(.bold)
+                    .monospacedDigit()
 
-                HStack(spacing: 8) {
-                    Text(coin.symbol)
-                        .foregroundColor(.secondary)
+                HStack(spacing: 10) {
+                    Text(coin.symbol.uppercased())
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
 
-                    Text(coin.change24h)
-                        .foregroundColor(coin.isUp ? .green : .red)
+                    HStack(spacing: 4) {
+                        Image(
+                            systemName: coin.isUp
+                                ? "arrow.up.right" : "arrow.down.right"
+                        )
+                        .font(.caption2)
+                        .fontWeight(.bold)
+
+                        Text(coin.change24h)
+                            .fontWeight(.semibold)
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(coin.isUp ? .green : .red)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(
+                                (coin.isUp ? Color.green : Color.red).opacity(
+                                    0.12
+                                )
+                            )
+                    )
                 }
-                .font(.title3)
             }
             .frame(maxWidth: .infinity)
+            .multilineTextAlignment(.center)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                "\(coin.symbol) price \(coin.price), 24 hour change \(coin.change24h)"
+            )
         }
     }
 
@@ -203,150 +273,26 @@ struct CoinDetailsView: View {
         ]
 
         var body: some View {
-            LazyVGrid(columns: gridColumns, spacing: 12) {
-                StatCardView(title: "Market Cap", value: coin.marketCap)
-                StatCardView(title: "Volume", value: coin.volume)
-                StatCardView(title: "ATH", value: coin.ath)
-                StatCardView(title: "ATL", value: coin.atl)
-            }
-        }
-    }
-
-    private struct AlertsSectionView: View {
-        let coinId: String
-        @EnvironmentObject private var env: AppEnvironment
-        @State private var showingCreateAlert = false
-
-        var body: some View {
             VStack(alignment: .leading, spacing: 10) {
-                let alerts = env.alertStore.alerts(coinId: coinId)
-                let unread = env.alertStore.unreadHistoryCount(coinId: coinId)
+                Text("Statistics")
+                    .font(.headline)
+                    .padding(.horizontal, 2)
 
-                HStack {
-                    Text("Alerts")
-                        .font(.headline)
+                LazyVGrid(columns: gridColumns, spacing: 12) {
+                    StatCardView(title: "Market Cap", value: coin.marketCap)
+                        .accessibilityLabel("Market cap \(coin.marketCap)")
 
-                    Spacer()
+                    StatCardView(title: "Volume", value: coin.volume)
+                        .accessibilityLabel("Volume \(coin.volume)")
 
-                    if unread > 0 {
-                        HStack(spacing: 6) {
-                            Image(systemName: "bell.badge")
-                            Text("\(unread)")
-                        }
-                        .font(.subheadline)
-                        .foregroundColor(.orange)
-                    }
+                    StatCardView(title: "All-time High", value: coin.ath)
+                        .accessibilityLabel("All time high \(coin.ath)")
+
+                    StatCardView(title: "All-time Low", value: coin.atl)
+                        .accessibilityLabel("All time low \(coin.atl)")
                 }
-
-                if alerts.isEmpty {
-                    HStack(spacing: 8) {
-                        Image(systemName: "bell")
-                            .foregroundColor(.secondary)
-                        Text("No alerts yet. Tap Seed to add one.")
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 8)
-                } else {
-                    VStack(spacing: 8) {
-                        ForEach(alerts) { alert in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(alertTitle(alert))
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                    Text(alertSubtitle(alert))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-
-                                Spacer()
-
-                                Toggle(
-                                    "",
-                                    isOn: Binding(
-                                        get: { alert.isEnabled },
-                                        set: { newValue in
-                                            env.alertStore.toggleEnabled(
-                                                alertId: alert.id,
-                                                isEnabled: newValue
-                                            )
-                                        }
-                                    )
-                                )
-                                .labelsHidden()
-
-                                Button(role: .destructive) {
-                                    env.alertStore.delete(alert)
-                                } label: {
-                                    Image(systemName: "trash")
-                                }
-                                .buttonStyle(.borderless)
-                            }
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(
-                                    cornerRadius: 12,
-                                    style: .continuous
-                                )
-                                .fill(Color.gray.opacity(0.08))
-                            )
-                        }
-                    }
-                }
-
-                HStack {
-                    Button {
-                        showingCreateAlert = true
-                    } label: {
-                        Label(Constants.ADD_ALERT, systemImage: "bolt.fill")
-                    }
-                }
-                .font(.subheadline)
-                .padding(.top, 4)
             }
-            .onAppear {
-                let alerts = env.alertStore.alerts(coinId: coinId)
-                print(
-                    "AlertsSectionView alertStore:",
-                    ObjectIdentifier(env.alertStore).hashValue,
-                    "active:",
-                    env.alertStore.active.count,
-                    "filtered:",
-                    alerts.count,
-                    "coinId:",
-                    coinId
-                )
-            }.sheet(isPresented: $showingCreateAlert) {
-                NewAlertModal(coinId: coinId, alertStore: env.alertStore)
-            }
-        }
-
-        private func alertTitle(_ alert: CoinPriceAlert) -> String {
-            switch alert.type {
-            case .above:
-                return "Price above \(CurrencyFormatter.usd(alert.targetPrice))"
-            case .below:
-                return "Price below \(CurrencyFormatter.usd(alert.targetPrice))"
-            case .percentage:
-                return
-                    "Change ±\(PercentFormatter.twoDecimals(alert.targetPrice))"
-            }
-        }
-
-        private func alertSubtitle(_ alert: CoinPriceAlert) -> String {
-            var parts: [String] = []
-            parts.append(
-                "Created "
-                    + alert.createdAt.formatted(
-                        date: .abbreviated,
-                        time: .shortened
-                    )
-            )
-            if alert.isEnabled == false {
-                parts.append("Disabled")
-            }
-            return parts.joined(separator: " • ")
+            .padding(.vertical, 2)
         }
     }
 
@@ -354,12 +300,38 @@ struct CoinDetailsView: View {
         let coin: CoinDetails
 
         var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Links")
                     .font(.headline)
+                    .padding(.horizontal, 2)
 
-                LinkRowView(title: "Website:", url: coin.websiteURL)
-                LinkRowView(title: "Explorer:", url: coin.explorerURL)
+                VStack(spacing: 0) {
+                    if let url = coin.websiteURL {
+                        LinkRowView(title: "Website", url: url)
+                    }
+
+                    if let url = coin.explorerURL {
+                        if coin.websiteURL != nil {
+                            Divider().padding(.leading, 44)
+                        }
+                        LinkRowView(title: "Explorer", url: url)
+                    }
+
+                    if coin.websiteURL == nil && coin.explorerURL == nil {
+                        HStack {
+                            Image(systemName: "link")
+                                .foregroundStyle(.secondary)
+                            Text("No links available")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                        .padding(12)
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.secondarySystemBackground))
+                )
             }
         }
     }
@@ -380,5 +352,4 @@ struct CoinDetailsView: View {
         )
     }
     .environmentObject(AppEnvironment(alertStore: AlertStore()))
-    .environmentObject(AlertStore())
 }
