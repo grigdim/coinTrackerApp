@@ -15,6 +15,7 @@ struct MarketsListView: View {
 
         case .failed(let error):
             LoadingErrorView(error: error, onRetry: onRetry)
+                .listRowSeparator(.hidden)
 
         case .loaded(let rows):
             loadedRows(rows)
@@ -22,12 +23,20 @@ struct MarketsListView: View {
     }
 
     private var loadingRow: some View {
-        HStack {
-            Spacer()
-            ProgressView("Loading…")
-            Spacer()
+        HStack(spacing: 10) {
+            ProgressView()
+                .controlSize(.regular)
+
+            Text("Loading…")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 10)
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
     }
 
     @ViewBuilder
@@ -37,7 +46,9 @@ struct MarketsListView: View {
                 || $0.name.localizedCaseInsensitiveContains(searchText)
         }
 
-        ForEach(Array(filtered.enumerated()), id: \.element.id) { index, row in
+        ForEach(filtered.indices, id: \.self) { index in
+            let row = filtered[index]
+
             NavigationLink(
                 value: CoinDetailsRoute(
                     id: row.id,
@@ -50,6 +61,10 @@ struct MarketsListView: View {
                     onAppear: { onRowAppear(index) }
                 )
             }
+            .listRowInsets(
+                EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+            )
+            .contentShape(Rectangle())  // nicer tap target feel
         }
     }
 }

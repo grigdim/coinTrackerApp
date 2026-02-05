@@ -2,19 +2,21 @@ import SwiftUI
 
 struct MarketRowItemView: View {
     let row: MarketRow
-    let onAppear: () -> Void
+    var onAppear: () -> Void = {}
+
     // Coordinate space name used to compute row offset for scroll tracking
     var coordinateSpaceName: String = "marketScrolled"
+
     // Whether to emit RowOffsetKey preference values
     var emitOffset: Bool = true
 
     var body: some View {
         CoinRowView(coin: row)
-            .background(
-                Group {
-                    if emitOffset {
-                        GeometryReader { geo in
-                            Color.clear.preference(
+            .background {
+                if emitOffset {
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(
                                 key: RowOffsetKey.self,
                                 value: [
                                     row.id: geo.frame(
@@ -22,16 +24,15 @@ struct MarketRowItemView: View {
                                     ).minY
                                 ]
                             )
-                        }
-                    } else {
-                        Color.clear
                     }
+                    .allowsHitTesting(false)
                 }
-            )
+            }
             .id(row.id)
             .onAppear(perform: onAppear)
     }
 }
+
 #Preview {
-    MarketRowItemView(row: MarketRow.sampleRows[0], onAppear: {})
+    MarketRowItemView(row: MarketRow.sampleRows[0])
 }

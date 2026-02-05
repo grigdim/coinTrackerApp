@@ -1,10 +1,3 @@
-//
-//  SearchScreen.swift
-//  CoinTrackerApp
-//
-//  Created by Dim Grigoriadis on 30/1/26.
-//
-
 import SwiftUI
 
 struct SearchScreen: View {
@@ -17,5 +10,7 @@ struct SearchScreen: View {
                 categoriesStore: stores.categories
             )
         )
+        .navigationTitle("Search")
+        .navigationBarTitleDisplayMode(.large)
     }
 }

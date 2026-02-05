@@ -14,7 +14,21 @@ struct PriceChartView: View {
     @State private var visibleXDomain: ClosedRange<Date>?
     @State private var lastMagnification: CGFloat = 1.0
 
-    // New designated initializer accepting AlertStore explicitly
+    // Design constants (UI only)
+    private let cardCornerRadius: CGFloat = 16
+    private let cardFill = Color.gray.opacity(0.08)
+    private let cardStroke = Color.gray.opacity(0.18)
+
+    // Formatter (UI only; avoid recreating every scrub frame)
+    private static let priceFormatter: NumberFormatter = {
+        let nf = NumberFormatter()
+        nf.numberStyle = .currency
+        nf.currencyCode = "USD"
+        nf.maximumFractionDigits = 2
+        nf.minimumFractionDigits = 0
+        return nf
+    }()
+
     init(coinId: String, alertStore: AlertStore) {
         self.coinId = coinId
 
@@ -31,21 +45,9 @@ struct PriceChartView: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            Picker("SelectedChartRange", selection: $selectedChartRange) {
-                ForEach(ChartRange.allCases) { chartRange in
-                    Text(chartRange.label).tag(chartRange)
-                }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: selectedChartRange) { _ in
-                // Reset zoom + selection when range changes
-                selectedPoint = nil
-                visibleXDomain = nil
-            }
-
+        VStack(alignment: .leading, spacing: 12) {
+            rangePicker
             header
-
             chartContainer
         }
         .task(id: taskKey) {
@@ -55,7 +57,6 @@ struct PriceChartView: View {
             )
         }
         .onChange(of: viewModelPointsSignature) { _ in
-            // New dataset => reset domain to full range
             if let full = fullXDomain(for: viewModelPointsSorted) {
                 visibleXDomain = full
             }
@@ -81,7 +82,6 @@ struct PriceChartView: View {
         viewModelPoints.sorted { $0.date < $1.date }
     }
 
-    /// A “signature” that changes when new points arrive (even if count stays same).
     private var viewModelPointsSignature: String {
         let pts = viewModelPointsSorted
         guard let first = pts.first?.date, let last = pts.last?.date else {
@@ -91,45 +91,81 @@ struct PriceChartView: View {
             "\(pts.count)-\(first.timeIntervalSince1970)-\(last.timeIntervalSince1970)"
     }
 
+    // MARK: - UI pieces
+
+    private var rangePicker: some View {
+        Picker("SelectedChartRange", selection: $selectedChartRange) {
+            ForEach(ChartRange.allCases) { chartRange in
+                Text(chartRange.label).tag(chartRange)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.vertical, 2)
+        .onChange(of: selectedChartRange) { _ in
+            // Reset zoom + selection when range changes
+            selectedPoint = nil
+            visibleXDomain = nil
+        }
+    }
+
     private var header: some View {
-        HStack {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("Price Chart")
                 .font(.headline)
 
             Spacer()
 
             if isLoading {
-                ProgressView().scaleEffect(0.9)
+                ProgressView()
+                    .controlSize(.small)
+                    .transition(.opacity)
             }
 
-            Button("Reset") {
+            Button {
                 if let full = fullXDomain(for: viewModelPointsSorted) {
                     visibleXDomain = full
                 }
                 selectedPoint = nil
+            } label: {
+                Text("Reset")
             }
             .font(.subheadline)
+            .buttonStyle(.borderless)
         }
+        .foregroundStyle(.primary)
     }
 
     @ViewBuilder
     private var chartContainer: some View {
         switch viewModel.state {
         case .idle, .loading:
-            placeholderBox(text: "Loading…")
+            placeholderCard(
+                title: "Loading…",
+                systemImage: "chart.line.uptrend.xyaxis"
+            )
 
         case .failed(let error):
-            placeholderBox(text: error.localizedDescription)
+            placeholderCard(
+                title: "Couldn’t load chart",
+                subtitle: error.localizedDescription,
+                systemImage: "exclamationmark.triangle"
+            )
 
         case .loaded(let points):
             let sorted = points.sorted { $0.date < $1.date }
             if sorted.count < 2 {
-                placeholderBox(text: "No data")
+                placeholderCard(
+                    title: "No data",
+                    subtitle: "Try another range.",
+                    systemImage: "waveform.path.ecg"
+                )
             } else {
                 chart(points: sorted)
             }
         }
     }
+
+    // MARK: - Chart
 
     private func chart(points sorted: [CoinChartPoint]) -> some View {
         let fullX =
@@ -138,8 +174,6 @@ struct PriceChartView: View {
 
         let visiblePoints = sorted.filter { xDomain.contains($0.date) }
         let yDomain = yDomain(for: visiblePoints)
-
-        let cornerRadius: CGFloat = 16
 
         return Chart {
             ForEach(sorted) { p in
@@ -150,30 +184,29 @@ struct PriceChartView: View {
                 .interpolationMethod(.catmullRom)
             }
 
+            // Selection visuals (UI only)
             if let selectedPoint {
                 RuleMark(x: .value("Selected", selectedPoint.date))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    .foregroundStyle(.secondary)
+
+                PointMark(
+                    x: .value("Selected Time", selectedPoint.date),
+                    y: .value("Selected Price", selectedPoint.value)
+                )
+                .symbolSize(40)
             }
         }
         .chartXScale(domain: xDomain)
         .chartYScale(domain: yDomain)
         .frame(height: 220)
-
         .chartPlotStyle { plotArea in
             plotArea.clipped()
         }
-
-        // Container
-        .background(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color.gray.opacity(0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .stroke(Color.gray.opacity(0.25))
-        )
-
+        .background(cardBackground)
+        .overlay(cardBorder)
         .clipShape(
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
         )
 
         .chartOverlay { proxy in
@@ -183,8 +216,9 @@ struct PriceChartView: View {
                 Rectangle()
                     .fill(Color.clear)
                     .contentShape(Rectangle())
-
                     .gesture(
+                        // NOTE: minimumDistance 0 = instant scrub; if pinch still feels hard,
+                        // change this to 5.
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 let xPos = value.location.x - plotFrame.origin.x
@@ -197,96 +231,129 @@ struct PriceChartView: View {
                             }
                     )
 
-                    .simultaneousGesture(
-                        MagnificationGesture()
-                            .onChanged { magnification in
-                                let current = visibleXDomain ?? fullX
-                                let delta = magnification / lastMagnification
-                                lastMagnification = magnification
-
-                                visibleXDomain = zoomX(
-                                    domain: current,
-                                    fullDomain: fullX,
-                                    by: delta
-                                )
-                            }
-                            .onEnded { _ in
-                                lastMagnification = 1.0
-                            }
-                    )
-
                 if let p = selectedPoint,
                     let xInPlot = proxy.position(forX: p.date)
                 {
-
-                    let tooltipWidth: CGFloat = 140
-                    let tooltipHeight: CGFloat = 44
-
-                    // Convert plot-relative x to absolute x in GeometryReader
-                    let absoluteX = plotFrame.minX + xInPlot
-
-                    // Clamp inside plot area
-                    let clampedX = min(
-                        max(absoluteX, plotFrame.minX + tooltipWidth / 2),
-                        plotFrame.maxX - tooltipWidth / 2
-                    )
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(formatPrice(p.value))
-                            .font(.caption)
-                            .fontWeight(.semibold)
-
-                        Text(
-                            p.date.formatted(date: .abbreviated, time: .omitted)
-                        )
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 8)
-                    .frame(
-                        width: tooltipWidth,
-                        height: tooltipHeight,
-                        alignment: .leading
-                    )
-                    .background(
-                        .thinMaterial,
-                        in: RoundedRectangle(
-                            cornerRadius: 10,
-                            style: .continuous
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Color.gray.opacity(0.25))
-                    )
-                    .position(
-                        x: clampedX,
-                        y: plotFrame.minY + tooltipHeight / 2 + 4
+                    tooltip(
+                        price: formatPrice(p.value),
+                        date: p.date,
+                        plotFrame: plotFrame,
+                        xInPlot: xInPlot
                     )
                 }
             }
         }
+        .simultaneousGesture(zoomGesture(fullX: fullX))
         .padding(.vertical, 4)
     }
 
-    private func placeholderBox(text: String) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.gray.opacity(0.15))
-                .frame(height: 220)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.gray.opacity(0.3))
-                )
-
-            Text(text)
-                .font(.headline)
-                .foregroundColor(.secondary)
-        }
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+            .fill(cardFill)
     }
 
-    //  Helpers
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+            .stroke(cardStroke)
+    }
+
+    // MARK: - Gestures
+
+    private func zoomGesture(fullX: ClosedRange<Date>) -> some Gesture {
+        MagnificationGesture()
+            .onChanged { magnification in
+                let current = visibleXDomain ?? fullX
+                let delta = magnification / lastMagnification
+                lastMagnification = magnification
+
+                visibleXDomain = zoomX(
+                    domain: current,
+                    fullDomain: fullX,
+                    by: delta
+                )
+            }
+            .onEnded { _ in
+                lastMagnification = 1.0
+            }
+    }
+
+    // MARK: - Tooltip
+
+    private func tooltip(
+        price: String,
+        date: Date,
+        plotFrame: CGRect,
+        xInPlot: CGFloat
+    ) -> some View {
+        let tooltipWidth: CGFloat = 160
+        let tooltipHeight: CGFloat = 52
+
+        let absoluteX = plotFrame.minX + xInPlot
+        let clampedX = min(
+            max(absoluteX, plotFrame.minX + tooltipWidth / 2),
+            plotFrame.maxX - tooltipWidth / 2
+        )
+
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(price)
+                .font(.caption)
+                .fontWeight(.semibold)
+
+            Text(date.formatted(date: .abbreviated, time: .omitted))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(width: tooltipWidth, height: tooltipHeight, alignment: .leading)
+        .background(
+            .thinMaterial,
+            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(cardStroke)
+        )
+        .position(
+            x: clampedX,
+            y: plotFrame.minY + tooltipHeight / 2 + 6
+        )
+    }
+
+    // MARK: - Placeholder
+
+    private func placeholderCard(
+        title: String,
+        subtitle: String? = nil,
+        systemImage: String
+    ) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.title3)
+                .foregroundStyle(.secondary)
+
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.secondary)
+
+            if let subtitle, !subtitle.isEmpty {
+                Text(subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 220)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .clipShape(
+            RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
+        )
+    }
+
+    // MARK: - Helpers (business logic intact)
 
     private func fullXDomain(for points: [CoinChartPoint]) -> ClosedRange<Date>?
     {
@@ -351,11 +418,6 @@ struct PriceChartView: View {
     }
 
     private func formatPrice(_ value: Double) -> String {
-        let nf = Foundation.NumberFormatter()
-        nf.numberStyle = .currency
-        nf.currencyCode = "USD"
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-        return nf.string(from: NSNumber(value: value)) ?? "\(value)"
+        Self.priceFormatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 }

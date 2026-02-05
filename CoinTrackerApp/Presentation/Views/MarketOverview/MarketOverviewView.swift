@@ -14,6 +14,7 @@ struct MarketOverviewView: View {
 
     @State private var selectedCategory: MarketCategory = .top100
     @State private var searchText: String = ""
+
     @State private var isSwitchingCategory: Bool = false
     @State private var latestOffsets: [String: CGFloat] = [:]
     @State private var switchTask: Task<Void, Never>?
@@ -24,15 +25,8 @@ struct MarketOverviewView: View {
     }
 
     var body: some View {
-        VStack(spacing: -10) {
-            Picker("Category", selection: $selectedCategory) {
-                ForEach(MarketCategory.allCases) { category in
-                    Text(category.rawValue).tag(category)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding()
-
+        VStack(spacing: 0) {
+            categoryPicker
             contentList
         }
         .task {
@@ -42,6 +36,23 @@ struct MarketOverviewView: View {
         .navigationDestination(for: CoinDetailsRoute.self) { route in
             CoinDetailsView(route: route)
         }
+    }
+
+    // MARK: - UI
+
+    private var categoryPicker: some View {
+        VStack(spacing: 8) {
+            Picker("Category", selection: $selectedCategory) {
+                ForEach(MarketCategory.allCases) { category in
+                    Text(category.rawValue).tag(category)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 10)
+        .background(Color(.systemBackground))
     }
 
     private var contentList: some View {
@@ -62,6 +73,7 @@ struct MarketOverviewView: View {
             guard shouldPaginate else { return }
             guard !isSwitchingCategory else { return }
             guard index >= thresholdIndex else { return }
+            guard !viewModel.isLoadingNextPage else { return }
 
             Task { await viewModel.loadNextPage(for: selectedCategory) }
         }
@@ -82,11 +94,16 @@ struct MarketOverviewView: View {
                 )
 
                 if shouldPaginate && viewModel.isLoadingNextPage {
-                    HStack {
+                    HStack(spacing: 10) {
                         Spacer()
                         ProgressView()
+                            .controlSize(.regular)
+                        Text("Loading more…")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                         Spacer()
                     }
+                    .padding(.vertical, 12)
                     .listRowSeparator(.hidden)
                 }
             }
@@ -136,6 +153,7 @@ struct MarketOverviewView: View {
                         }
                     }
 
+                    // Load new category
                     await viewModel.loadMarketRows(for: newValue)
                     guard !Task.isCancelled else { return }
                     guard selectedCategory == newValue else { return }
