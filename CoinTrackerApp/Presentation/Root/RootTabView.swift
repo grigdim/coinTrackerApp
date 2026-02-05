@@ -87,5 +87,12 @@ struct RootTabView: View {
 }
 
 #Preview {
-    RootTabView()
+    let stores = AppStores()
+
+    return RootTabView()
+        .environmentObject(stores)
+        .environmentObject(AppEnvironment(alertStore: AlertStore()))
+        .task {
+            await stores.categories.loadIfNeeded()
+        }
 }
