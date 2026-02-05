@@ -86,7 +86,7 @@ struct PortfolioView: View {
         }
         // 6. Sheet for Searching/Adding Coins
         .sheet(isPresented: $showingAddSheet) {
-            PortfolioCoinSelectionView(portfolioViewModel: viewModel)
+            PortfolioCoinSelectionView(viewModel: viewModel)
         }
         // 7. Data Refreshing
         .refreshable {
@@ -195,3 +195,4 @@ struct AssetRow: View {
         .contentShape(Rectangle()) // Ensures entire row is tappable
     }
 }
+

@@ -8,66 +8,85 @@
 import SwiftUI
 
 struct PortfolioCoinSelectionView: View {
-    @StateObject private var marketViewModel: MarketOverviewViewModel
-    @ObservedObject var portfolioViewModel: PortfolioViewModel
+    @ObservedObject var viewModel: PortfolioViewModel
     @Environment(\.dismiss) var dismiss
     
-    @State private var searchText = ""
-    
-    // CHANGED: We use this single state to control the sheet
     @State private var selectedCoin: CoinDetailsRoute?
-    
-    init(portfolioViewModel: PortfolioViewModel) {
-        self.portfolioViewModel = portfolioViewModel
-        let apiClient = APIClient()
-        let store = MarketsStore(
-            getMarketRows: GetMarketRowsUseCaseImpl(
-                repository: MarketRowRepositoryImpl(apiClient: apiClient)
-            )
-        )
-        _marketViewModel = StateObject(wrappedValue: MarketOverviewViewModel(store: store))
-    }
     
     var body: some View {
         NavigationStack {
             Group {
-                switch marketViewModel.state {
+                switch viewModel.searchState {
                 case .idle:
-                    Color.clear.onAppear { Task { await marketViewModel.loadMarketRows(for: .top100) } }
-                case .loading:
-                    ProgressView("Loading Coins...")
-                case .failed(let error):
-                    VStack {
-                        Text("Error loading coins").font(.headline)
-                        Text(error.localizedDescription).font(.caption)
-                        Button("Retry") { Task { await marketViewModel.loadMarketRows(for: .top100) } }
-                    }
-                case .loaded(let rows):
-                    let filtered = rows.filter {
-                        searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
+                    Color.clear.onAppear {
+                        Task { await viewModel.loadAvailableCoins() }
                     }
                     
-                    if filtered.isEmpty {
-                        VStack {
-                            Image(systemName: "magnifyingglass").font(.largeTitle)
+                case .loading:
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading Coins...")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                case .failed(let error):
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.orange)
+                        Text("Failed to load list")
+                        Text(error.localizedDescription)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button("Retry") {
+                            Task { await viewModel.loadAvailableCoins() }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    
+                case .loaded:
+                    if viewModel.filteredCoins.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.largeTitle)
+                                .foregroundColor(.secondary)
                             Text("No coins found")
-                        }.foregroundColor(.secondary)
+                                .font(.headline)
+                        }
                     } else {
-                        List(filtered) { row in
+                        List(viewModel.filteredCoins) { row in
                             Button {
-                                // ACTION: Simply setting this triggers the sheet
                                 selectedCoin = CoinDetailsRoute(id: row.id, name: row.name, iconURL: row.iconURL)
                             } label: {
                                 HStack {
-                                    AsyncImage(url: row.iconURL) { img in img.resizable() } placeholder: { Circle().fill(.gray.opacity(0.3)) }
-                                        .frame(width: 32, height: 32)
-                                        .clipShape(Circle())
-                                    VStack(alignment: .leading) {
-                                        Text(row.name).font(.headline)
-                                        Text(row.symbol.uppercased()).font(.caption).foregroundColor(.secondary)
+                                    AsyncImage(url: row.iconURL) { img in
+                                        img.resizable()
+                                    } placeholder: {
+                                        Circle().fill(Color.gray.opacity(0.3))
                                     }
+                                    .frame(width: 32, height: 32)
+                                    .clipShape(Circle())
+                                    
+                                    VStack(alignment: .leading) {
+                                        Text(row.name)
+                                            .font(.headline)
+                                        Text(row.symbol.uppercased())
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    
                                     Spacer()
-                                    Image(systemName: "plus.circle.fill").foregroundColor(.blue)
+                                    
+                                    // FIXED: Removed 'if let'. Display the Double directly.
+                                    Text(row.currentPriceRaw.formatted(.currency(code: "USD")))
+                                        .foregroundColor(.secondary)
+                                        .font(.subheadline)
+                                    
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.blue)
                                 }
                                 .padding(.vertical, 4)
                                 .contentShape(Rectangle())
@@ -78,16 +97,16 @@ struct PortfolioCoinSelectionView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "Search...")
+            .searchable(text: $viewModel.searchText, prompt: "Search Bitcoin, Ethereum...")
             .navigationTitle("Select Asset")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
             }
-            // FIXED SHEET LOGIC:
-            // This only activates if 'selectedCoin' is NOT nil.
-            // It passes the safe, unwrapped 'coin' directly to the view.
             .sheet(item: $selectedCoin) { coin in
-                AddHoldingView(viewModel: portfolioViewModel, coin: coin)
+                AddHoldingView(viewModel: viewModel, coin: coin)
                     .presentationDetents([.medium])
             }
         }

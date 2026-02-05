@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct MarketRow: Identifiable, Hashable {
+struct MarketRow: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let symbol: String
