@@ -24,6 +24,7 @@ struct WatchlistView: View {
                             EmptyView()
                         }
                         .opacity(0)
+                        
                         // Visual Row Content
                         HStack(spacing: 12) {
                             ZStack {
@@ -45,15 +46,10 @@ struct WatchlistView: View {
                         }
                         .padding(.vertical, 4)
                     }
-
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
-                            if let index = viewModel.watchlists.firstIndex(
-                                where: { $0.id == watchlist.id })
-                            {
-                                viewModel.deleteWatchlist(
-                                    at: IndexSet(integer: index)
-                                )
+                            if let index = viewModel.watchlists.firstIndex(where: { $0.id == watchlist.id }) {
+                                viewModel.deleteWatchlist(at: IndexSet(integer: index))
                             }
                         } label: {
                             Label("Delete", systemImage: "trash")
@@ -79,6 +75,10 @@ struct WatchlistView: View {
             }
             .onAppear {
                 viewModel.loadData()
+            }
+            // MARK: - Connect the Add View Here
+            .sheet(isPresented: $showingAddSheet) {
+                AddWatchlistView(viewModel: viewModel)
             }
         }
     }

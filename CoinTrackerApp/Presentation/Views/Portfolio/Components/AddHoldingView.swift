@@ -9,9 +9,7 @@ import SwiftUI
 
 struct AddHoldingView: View {
     @Environment(\.dismiss) var dismiss
-    @ObservedObject var viewModel: PortfolioViewModel
-    
-    // We receive the coin safely from the sheet(item:) above
+    @EnvironmentObject var viewModel: PortfolioViewModel
     let coin: CoinDetailsRoute
     
     @State private var priceString = ""

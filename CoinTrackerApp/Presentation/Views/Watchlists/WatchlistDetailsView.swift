@@ -9,6 +9,10 @@ import SwiftUI
 
 struct WatchlistDetailView: View {
     @Binding var watchlist: Watchlist
+    @EnvironmentObject var viewModel: PortfolioViewModel
+    
+    @State private var selectedCoinForPortfolio: CoinDetails?
+    @State private var isShowingAddSheet = false
     
     var body: some View {
         Group {
@@ -17,49 +21,61 @@ struct WatchlistDetailView: View {
             } else {
                 List {
                     ForEach(watchlist.coins) { coinDetail in
-                        CoinRowView(coin: coinDetail.toMarketRow)
-                            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-                            .listRowSeparator(.hidden)
-                            
-                            // Swipe Leading: Portfolio
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    print("Portfolio: \(coinDetail.name)")
-                                } label: {
-                                    Label("Portfolio", systemImage: "case.fill")
-                                }
-                                .tint(.blue)
-                            }
-                            
-                            // Swipe Trailing: Delete
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    deleteCoin(coinDetail)
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
-                                }
-                            }
-                            // Navigation Link (Invisible)
-                            .background(
-                                NavigationLink("", value: coinDetail)
-                                    .opacity(0)
+                        NavigationLink {
+                            CoinDetailsView(
+                                route: CoinDetailsRoute(
+                                    id: coinDetail.id,
+                                    name: coinDetail.name,
+                                    iconURL: coinDetail.iconURL
+                                )
                             )
+                        } label: {
+                            CoinRowView(coin: coinDetail.toMarketRow)
+                        }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        .listRowSeparator(.hidden)
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                selectedCoinForPortfolio = coinDetail
+                            } label: {
+                                Label("Portfolio", systemImage: "case.fill")
+                            }
+                            .tint(.blue)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                deleteCoin(coinDetail)
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                        }
                     }
                 }
                 .listStyle(.plain)
             }
         }
         .navigationTitle(watchlist.name)
-        .navigationDestination(for: CoinDetails.self) { coin in
-            // Map 'CoinDetails' -> 'CoinDetailsRoute'
-            CoinDetailsView(
-                route: CoinDetailsRoute(
-                    id: coin.id,
-                    name: coin.name,
-                    iconURL: coin.iconURL
-                )
-            )
+        
+        // MARK: - Toolbar (Add Coin to Watchlist)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    isShowingAddSheet = true
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
         }
+        
+        // MARK: - Sheet 1: Add to Portfolio (Triggered by Swipe)
+        .sheet(item: $selectedCoinForPortfolio) { coin in
+            AddAssetFromWatchlistView(
+                viewModel: _viewModel,
+                coin: coin
+            )
+            .presentationDetents([.medium])
+        }
+    
     }
     
     private func deleteCoin(_ coin: CoinDetails) {
@@ -69,9 +85,16 @@ struct WatchlistDetailView: View {
     }
 }
 
-// Helper for the preview
+// MARK: - Preview Helper
 #Preview {
     NavigationStack {
-        WatchlistDetailView(watchlist: .constant(Watchlist.mocks()[0]))
+        WatchlistDetailView(
+            watchlist: .constant(Watchlist.mocks()[0])
+        )
+        .environmentObject(
+            PortfolioViewModel(
+                repository: MarketRowRepositoryImpl(apiClient: APIClient())
+            )
+        )
     }
 }
