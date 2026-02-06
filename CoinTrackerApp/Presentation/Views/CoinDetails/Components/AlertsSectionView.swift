@@ -9,32 +9,37 @@ import SwiftUI
 struct AlertsSectionView: View {
     let coinId: String
     @EnvironmentObject private var env: AppEnvironment
+    @EnvironmentObject private var alertStore: AlertStore
     @State private var showingCreateAlert = false
+
+    // Derived state that depends on @Published arrays of alertStore.
+    private var alertsForCoin: [CoinPriceAlert] {
+        alertStore.active.filter { $0.coinId == coinId }
+    }
+
+    private var unreadForCoin: Int {
+        alertStore.history.filter { $0.coinId == coinId && $0.isUnread }.count
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            header(unread: unreadForCoin)
 
-            // Keep the same business logic
-            let alerts = env.alertStore.alerts(coinId: coinId)
-            let unread = env.alertStore.unreadHistoryCount(coinId: coinId)
-
-            header(unread: unread)
-
-            if alerts.isEmpty {
+            if alertsForCoin.isEmpty {
                 emptyState
             } else {
-                alertsList(alerts)
+                alertsList(alertsForCoin)
             }
 
             addButton
         }
         .onAppear {
-            let alerts = env.alertStore.alerts(coinId: coinId)
+            let alerts = alertStore.alerts(coinId: coinId)
             print(
                 "AlertsSectionView alertStore:",
-                ObjectIdentifier(env.alertStore).hashValue,
+                ObjectIdentifier(alertStore).hashValue,
                 "active:",
-                env.alertStore.active.count,
+                alertStore.active.count,
                 "filtered:",
                 alerts.count,
                 "coinId:",
@@ -42,7 +47,10 @@ struct AlertsSectionView: View {
             )
         }
         .sheet(isPresented: $showingCreateAlert) {
-            NewAlertModal(coinId: coinId, alertStore: env.alertStore)
+            NewAlertModal(
+                coinId: coinId,
+                alertStore: alertStore
+            )
         }
     }
 
@@ -56,22 +64,27 @@ struct AlertsSectionView: View {
             Spacer()
 
             if unread > 0 {
-                HStack(spacing: 6) {
-                    Image(systemName: "bell.badge.fill")
-                        .imageScale(.small)
+                NavigationLink {
+                    CoinAlertsHistoryView(coinId: coinId)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "bell.badge.fill")
+                            .imageScale(.small)
 
-                    Text("\(unread)")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .monospacedDigit()
+                        Text("\(unread)")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .monospacedDigit()
+                    }
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.orange.opacity(0.12))
+                    )
                 }
-                .foregroundStyle(.orange)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(Color.orange.opacity(0.12))
-                )
+                .buttonStyle(.plain)
                 .accessibilityLabel("\(unread) unread alert events")
             }
         }
@@ -134,7 +147,7 @@ struct AlertsSectionView: View {
                 isOn: Binding(
                     get: { alert.isEnabled },
                     set: { newValue in
-                        env.alertStore.toggleEnabled(
+                        alertStore.toggleEnabled(
                             alertId: alert.id,
                             isEnabled: newValue
                         )
@@ -144,7 +157,7 @@ struct AlertsSectionView: View {
             .labelsHidden()
 
             Button(role: .destructive) {
-                env.alertStore.delete(alert)
+                alertStore.delete(alert)
             } label: {
                 Image(systemName: "trash")
                     .imageScale(.medium)
@@ -206,4 +219,3 @@ struct AlertsSectionView: View {
         return parts.joined(separator: " • ")
     }
 }
-

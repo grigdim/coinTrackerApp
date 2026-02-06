@@ -74,7 +74,7 @@ struct CoinDetailsView: View {
 
                 section {
                     PriceChartView(
-                        coinId: coinDetails.id,
+                        coinId: coinDetails.id, 
                         alertStore: env.alertStore
                     )
                 }

@@ -12,6 +12,8 @@ import SwiftUI
 @MainActor final class AlertStore: ObservableObject {
     @Published private(set) var active: [CoinPriceAlert] = []
     @Published private(set) var history: [CoinPriceAlert] = []
+    // Version to force view refreshes on any mutation
+    @Published private(set) var version: Int = 0
 
     private struct Persisted: Codable, Equatable {
         var active: [CoinPriceAlert]
@@ -28,6 +30,8 @@ import SwiftUI
             self.active = []
             self.history = []
         }
+        // No need to bump here unless you want refresh at launch. It won't hurt:
+        version &+= 1
     }
 
     private func save() {
@@ -35,20 +39,38 @@ import SwiftUI
             let payload = Persisted(active: active, history: history)
             let data = try JSONEncoder().encode(payload)
             try data.write(to: fileURL, options: [.atomic])
-
         } catch {
             print("Failed to save alerts: \(error)")
         }
+        // Saving alone doesn't change state; no bump here.
     }
 
     func add(_ alert: CoinPriceAlert) {
-        active.append(alert)
+        // Paranoia: ensure unique id
+        if active.contains(where: { $0.id == alert.id }) {
+            var newAlert = alert
+            newAlert = CoinPriceAlert(
+                id: UUID(),
+                coinId: alert.coinId,
+                targetPrice: alert.targetPrice,
+                type: alert.type,
+                isEnabled: alert.isEnabled,
+                createdAt: alert.createdAt,
+                triggeredAt: alert.triggeredAt,
+                isUnread: alert.isUnread
+            )
+            active.append(newAlert)
+        } else {
+            active.append(alert)
+        }
+        version &+= 1
         save()
     }
 
     func delete(_ alert: CoinPriceAlert) {
         if let idx = active.firstIndex(where: { $0.id == alert.id }) {
             active.remove(at: idx)
+            version &+= 1
             save()
         }
     }
@@ -58,6 +80,7 @@ import SwiftUI
             return
         }
         active[idx].isEnabled = isEnabled
+        version &+= 1
         save()
     }
 
@@ -73,49 +96,30 @@ import SwiftUI
         alert.triggeredAt = triggeredAt
         alert.isUnread = markUnread
         history.insert(alert, at: 0)
+        version &+= 1
         save()
     }
 
     func evaluateAlerts(
         coinId: String,
-
         latestPrice: Double,
-
         baselinePriceForPercentage: Double? = nil
-
     ) -> [CoinPriceAlert] {
         let candidates = alerts(coinId: coinId).filter { $0.isEnabled }
-
         return candidates.filter { alert in
-
             switch alert.type {
-
             case .above:
-
                 return latestPrice >= alert.targetPrice
-
             case .below:
-
                 return latestPrice <= alert.targetPrice
-
             case .percentage:
-
                 guard let base = baselinePriceForPercentage, base > 0 else {
-
                     return false
-
                 }
-
                 let change = ((latestPrice - base) / base) * 100.0
-
-                // Treat targetPrice as magnitude threshold (e.g., 5 means ±5%)
-
                 return abs(change) >= alert.targetPrice
-
             }
-
         }
-
     }
 
     func markHistoryRead(alertId: UUID) {
@@ -123,6 +127,7 @@ import SwiftUI
             return
         }
         history[idx].isUnread = false
+        version &+= 1
         save()
     }
 
@@ -154,5 +159,5 @@ import SwiftUI
 
         loadFromFile()
     }
-
 }
+

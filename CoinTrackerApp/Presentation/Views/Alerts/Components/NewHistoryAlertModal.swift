@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct NewAlertModal: View {
+struct NewHistoryAlertModal: View {
 
     let coinId: String
     let alertStore: AlertStore
@@ -19,6 +19,32 @@ struct NewAlertModal: View {
     @State private var targetText: String = ""
     // Visual-only validation error for target input
     @State private var targetError: String?
+
+    // Plain dropdown for coin selection
+    enum TrackedCoin: String, CaseIterable, Identifiable {
+        case btc, eth, xrp
+
+        var id: String { rawValue }
+
+        var displayName: String {
+            switch self {
+            case .btc: return "BTC"
+            case .eth: return "ETH"
+            case .xrp: return "XRP"
+            }
+        }
+
+        // Map to whatever coinId your app uses elsewhere
+        var coinId: String {
+            switch self {
+            case .btc: return "BTC"
+            case .eth: return "ETH"
+            case .xrp: return "XRP"
+            }
+        }
+    }
+
+    @State private var selectedCoin: String = "--"
 
     var body: some View {
         NavigationStack {
@@ -56,6 +82,67 @@ struct NewAlertModal: View {
                     }
 
                     VStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Label(
+                                Constants.NOTIFICATION_TARGET,
+                                systemImage: "Select Coin"
+                            )
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                            HStack(spacing: 10) {
+                                Text("coin")
+                                    .font(.headline)
+                                    .foregroundStyle(.secondary)
+
+                                Picker("Coin", selection: $selectedCoin) {
+                                    ForEach(TrackedCoin.allCases) { coin in
+                                        Text(coin.displayName).tag(coin)
+                                    }
+                                }
+                                .textInputAutocapitalization(.never)
+                                .disableAutocorrection(true)
+                                .keyboardType(.decimalPad)
+                                .font(
+                                    .system(
+                                        .title3,
+                                        design: .rounded,
+                                        weight: .semibold
+                                    )
+                                )
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 12)
+                                .background(
+                                    RoundedRectangle(
+                                        cornerRadius: 12,
+                                        style: .continuous
+                                    )
+                                    .fill(Color.gray.opacity(0.12))
+                                )
+                                .overlay(
+                                    RoundedRectangle(
+                                        cornerRadius: 12,
+                                        style: .continuous
+                                    )
+                                    .stroke(
+                                        targetError == nil
+                                            ? Color.gray.opacity(0.25)
+                                            : Color.red.opacity(0.6)
+                                    )
+                                )
+                                .onChange(of: targetText) { newValue in
+                                    validateTarget(newValue)
+                                }
+                            }
+
+                            // Inline validation message
+                            if let targetError {
+                                Text(targetError)
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+
+                        }
                         VStack(alignment: .leading, spacing: 10) {
                             Label(
                                 Constants.NOTIFICATION_TARGET,
