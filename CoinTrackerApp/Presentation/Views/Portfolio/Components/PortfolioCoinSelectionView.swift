@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PortfolioCoinSelectionView: View {
-    @ObservedObject var viewModel: PortfolioViewModel
+    @EnvironmentObject var viewModel: PortfolioViewModel
     @Environment(\.dismiss) var dismiss
     
     @State private var selectedCoin: CoinDetailsRoute?
@@ -106,7 +106,7 @@ struct PortfolioCoinSelectionView: View {
                 }
             }
             .sheet(item: $selectedCoin) { coin in
-                AddHoldingView(viewModel: viewModel, coin: coin)
+                AddHoldingView(viewModel: _viewModel, coin: coin)
                     .presentationDetents([.medium])
             }
         }

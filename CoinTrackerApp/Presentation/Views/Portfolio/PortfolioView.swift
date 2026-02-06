@@ -8,18 +8,9 @@
 import SwiftUI
 
 struct PortfolioView: View {
-    @StateObject private var viewModel: PortfolioViewModel
+    @EnvironmentObject var viewModel: PortfolioViewModel
     @State private var showingAddSheet = false
     
-    init(viewModel: PortfolioViewModel? = nil) {
-        if let vm = viewModel {
-            _viewModel = StateObject(wrappedValue: vm)
-        } else {
-            let apiClient = APIClient()
-            let repo = MarketRowRepositoryImpl(apiClient: apiClient)
-            _viewModel = StateObject(wrappedValue: PortfolioViewModel(repository: repo))
-        }
-    }
     
     var body: some View {
         ScrollView {
@@ -86,7 +77,7 @@ struct PortfolioView: View {
         }
         // 6. Sheet for Searching/Adding Coins
         .sheet(isPresented: $showingAddSheet) {
-            PortfolioCoinSelectionView(viewModel: viewModel)
+            PortfolioCoinSelectionView(viewModel: _viewModel)
         }
         // 7. Data Refreshing
         .refreshable {
