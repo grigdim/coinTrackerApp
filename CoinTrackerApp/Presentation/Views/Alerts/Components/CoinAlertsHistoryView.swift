@@ -10,7 +10,7 @@ import SwiftUI
 struct CoinAlertsHistoryView: View {
     let coinId: String
 
-    @EnvironmentObject var env: AppEnvironment
+    @EnvironmentObject var alertStore: AlertStore
 
     var body: some View {
 
@@ -18,7 +18,7 @@ struct CoinAlertsHistoryView: View {
 
             Section(header: Text(coinId)) {
 
-                let items = env.alertStore.history(coinId: coinId)
+                let items = alertStore.history(coinId: coinId)
 
                 if items.isEmpty {
 

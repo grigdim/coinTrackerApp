@@ -33,17 +33,13 @@ final class PriceChartViewModel: ObservableObject {
         activeCoinId = id
         activeChartRange = range
 
-        // 1) Serve cached immediately (good UX)
         if let cached = cachedChartData[id]?[range] {
             state = .loaded(cached.value)
 
-            // If fresh, stop here
             if !isStale(cached.fetchedAt, cacheTTL: cacheTTL) {
                 return
             }
-            // else: fall through to refresh in background
         } else {
-            // No cache at all -> show full loading
             state = .loading
         }
 

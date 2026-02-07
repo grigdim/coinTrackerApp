@@ -18,7 +18,7 @@ struct CoinDetailsRoute: Hashable, Identifiable {
 // MARK: - Main View
 struct CoinDetailsView: View {
     @StateObject private var viewModel: CoinDetailsViewModel
-    @EnvironmentObject private var env: AppEnvironment
+    @EnvironmentObject private var alertStore: AlertStore
 
     @StateObject private var watchlistsViewModel = WatchlistsViewModel()
 
@@ -75,7 +75,7 @@ struct CoinDetailsView: View {
                 section {
                     PriceChartView(
                         coinId: coinDetails.id, 
-                        alertStore: env.alertStore
+                        alertStore: alertStore
                     )
                 }
 

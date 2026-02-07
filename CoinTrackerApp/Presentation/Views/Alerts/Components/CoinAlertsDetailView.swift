@@ -2,12 +2,12 @@ import SwiftUI
 
 struct CoinAlertsDetailView: View {
     let coinId: String
-    @EnvironmentObject private var env: AppEnvironment
+    @EnvironmentObject private var alertStore: AlertStore
 
     var body: some View {
         List {
             Section(header: Text(coinId)) {
-                let alerts = env.alertStore.alerts(coinId: coinId)
+                let alerts = alertStore.alerts(coinId: coinId)
                 if alerts.isEmpty {
                     HStack(spacing: 6) {
                         Image(systemName: "bell")
@@ -39,7 +39,7 @@ struct CoinAlertsDetailView: View {
                                 isOn: Binding(
                                     get: { alert.isEnabled },
                                     set: { newValue in
-                                        env.alertStore.toggleEnabled(
+                                        alertStore.toggleEnabled(
                                             alertId: alert.id,
                                             isEnabled: newValue
                                         )
@@ -50,7 +50,7 @@ struct CoinAlertsDetailView: View {
                             .toggleStyle(.switch)
                             .scaleEffect(0.85)
                             Button(role: .destructive) {
-                                env.alertStore.delete(alert)
+                                alertStore.delete(alert)
                             } label: {
                                 Image(systemName: "trash")
                                     .imageScale(.small)
@@ -103,6 +103,6 @@ struct CoinAlertsDetailView: View {
             triggeredAt: nil,
             isUnread: false
         )
-        env.alertStore.add(sample)
+        alertStore.add(sample)
     }
 }

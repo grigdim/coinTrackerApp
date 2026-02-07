@@ -16,18 +16,13 @@ struct CoinTrackerApp: App {
         WindowGroup {
             RootTabView()
                 .environmentObject(stores)
-                // Provide both the environment container and the store itself.
-                .environmentObject(env)
                 .environmentObject(env.alertStore)
                 .environmentObject(portfolioViewModel)
                 .task {
                     await stores.categories.loadIfNeeded()
                 }
                 .task {
-                    // Share the AlertStore with NotificationManager
                     NotificationManager.shared.alertStore = env.alertStore
-
-                    // Ask for notification permission on first launch
                     await NotificationManager.shared.requestAuthorization()
                 }
         }
