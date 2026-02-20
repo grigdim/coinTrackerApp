@@ -21,12 +21,11 @@ import SwiftUI
     }
 
     private func loadFromFile() {
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let decoded = try JSONDecoder().decode(Persisted.self, from: data)
+        if let decoded = CodablePersistence.loadFromFile(Persisted.self, at: fileURL)
+        {
             self.active = decoded.active
             self.history = decoded.history
-        } catch {
+        } else {
             self.active = []
             self.history = []
         }
@@ -37,8 +36,7 @@ import SwiftUI
     private func save() {
         do {
             let payload = Persisted(active: active, history: history)
-            let data = try JSONEncoder().encode(payload)
-            try data.write(to: fileURL, options: [.atomic])
+            try CodablePersistence.saveToFile(payload, at: fileURL)
         } catch {
             print("Failed to save alerts: \(error)")
         }
@@ -160,4 +158,3 @@ import SwiftUI
         loadFromFile()
     }
 }
-

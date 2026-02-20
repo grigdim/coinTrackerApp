@@ -10,7 +10,7 @@ struct SearchFiltersSheet: View {
 
     private let priceMax: Double = 200_000
     private let marketCapMax: Double = 2_000_000_000_000
-    private let volumeMax: Double = 200_000_000_000
+    private let volumeMax: Double = 2_000_000_000_000
 
     init(
         current: SearchFilters,

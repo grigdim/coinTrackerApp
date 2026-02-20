@@ -23,22 +23,20 @@ class WatchlistsViewModel: ObservableObject {
     init() {}
     
     func loadData() {
-        // 3. Try to load from UserDefaults first
-        if let data = UserDefaults.standard.data(forKey: saveKey) {
-            if let decoded = try? JSONDecoder().decode([Watchlist].self, from: data) {
-                self.watchlists = decoded
-                return
-            }
+        if let decoded = CodablePersistence.loadFromUserDefaults(
+            [Watchlist].self,
+            key: saveKey
+        ) {
+            self.watchlists = decoded
+            return
         }
-        // 4. If no saved data exists (first launch), start empty
+
+        // If no saved data exists (first launch), start empty.
         self.watchlists = []
     }
     
-    // 5. Save Helper
     private func saveData() {
-        if let encoded = try? JSONEncoder().encode(watchlists) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-        }
+        CodablePersistence.saveToUserDefaults(watchlists, key: saveKey)
     }
     
     // MARK: - Watchlist Management

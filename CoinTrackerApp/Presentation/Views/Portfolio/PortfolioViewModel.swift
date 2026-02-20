@@ -162,7 +162,7 @@ class PortfolioViewModel: ObservableObject {
     }
     
     func resetPortfolio() {
-        UserDefaults.standard.removeObject(forKey: portfolioSaveKey)
+        CodablePersistence.removeUserDefaultsValue(for: portfolioSaveKey)
         self.assets = []
     }
     
@@ -184,27 +184,27 @@ class PortfolioViewModel: ObservableObject {
     // MARK: - Persistence Helpers
     
     private func savePortfolio() {
-        if let encoded = try? JSONEncoder().encode(assets) {
-            UserDefaults.standard.set(encoded, forKey: portfolioSaveKey)
-        }
+        CodablePersistence.saveToUserDefaults(assets, key: portfolioSaveKey)
     }
     
     private func loadPortfolio() {
-        if let data = UserDefaults.standard.data(forKey: portfolioSaveKey),
-           let decoded = try? JSONDecoder().decode([PortfolioAsset].self, from: data) {
+        if let decoded = CodablePersistence.loadFromUserDefaults(
+            [PortfolioAsset].self,
+            key: portfolioSaveKey
+        ) {
             self.assets = decoded
         }
     }
     
     private func saveCoinList() {
-        if let encoded = try? JSONEncoder().encode(availableCoins) {
-            UserDefaults.standard.set(encoded, forKey: coinListSaveKey)
-        }
+        CodablePersistence.saveToUserDefaults(availableCoins, key: coinListSaveKey)
     }
     
     private func loadCachedCoinList() {
-        if let data = UserDefaults.standard.data(forKey: coinListSaveKey),
-           let decoded = try? JSONDecoder().decode([MarketRow].self, from: data) {
+        if let decoded = CodablePersistence.loadFromUserDefaults(
+            [MarketRow].self,
+            key: coinListSaveKey
+        ) {
             self.availableCoins = decoded
         }
     }

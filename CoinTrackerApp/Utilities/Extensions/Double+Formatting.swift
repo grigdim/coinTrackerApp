@@ -86,15 +86,46 @@ enum MoneyStringFormatter {
         return symbol + AbbreviatedNumberFormatter.format(number)
     }
 
-    /// Accepts strings like "$282,142" and returns "$282K" etc.
+    /// Accepts strings like "$282,142", "$847.2B", "12.5M" and returns raw value.
     static func parseMoneyToDouble(_ s: String) -> Double? {
-        // keep digits and dot only
-        let cleaned =
-            s
-            .replacingOccurrences(of: ",", with: "")
-            .replacingOccurrences(of: "$", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        var text = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, text != "—" else { return nil }
 
-        return Double(cleaned)
+        // Support common abbreviation suffixes.
+        let multipliers: [String: Double] = [
+            "K": 1_000,
+            "M": 1_000_000,
+            "B": 1_000_000_000,
+            "T": 1_000_000_000_000,
+        ]
+        var multiplier: Double = 1
+        if let last = text.last {
+            let suffix = String(last).uppercased()
+            if let value = multipliers[suffix] {
+                multiplier = value
+                text.removeLast()
+            }
+        }
+
+        // Strip currency symbols/whitespace but preserve signs and separators.
+        let currencySymbols = CharacterSet(charactersIn: "$€£¥₩₹")
+        let scalars =
+            text
+            .unicodeScalars
+            .filter { !currencySymbols.contains($0) && !$0.properties.isWhitespace }
+        let numberPart = String(String.UnicodeScalarView(scalars))
+        guard !numberPart.isEmpty else { return nil }
+
+        // Try locale-aware parse first (works for values produced by our formatters).
+        let localFormatter = NumberFormatter()
+        localFormatter.numberStyle = .decimal
+        localFormatter.locale = .current
+        if let parsed = localFormatter.number(from: numberPart)?.doubleValue {
+            return parsed * multiplier
+        }
+
+        // Fallback for API-style strings with "," groupings regardless of locale.
+        let fallback = numberPart.replacingOccurrences(of: ",", with: "")
+        return Double(fallback).map { $0 * multiplier }
     }
 }

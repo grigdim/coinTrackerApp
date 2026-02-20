@@ -8,7 +8,6 @@ import SwiftUI
 
 struct AlertsSectionView: View {
     let coinId: String
-    @EnvironmentObject private var env: AppEnvironment
     @EnvironmentObject private var alertStore: AlertStore
     @State private var showingCreateAlert = false
 
@@ -131,11 +130,11 @@ struct AlertsSectionView: View {
         HStack(spacing: 12) {
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(alertTitle(alert))
+                Text(alertTitle(for: alert))
                     .font(.subheadline)
                     .fontWeight(.semibold)
 
-                Text(alertSubtitle(alert))
+                Text(alertSubtitle(for: alert))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -190,32 +189,4 @@ struct AlertsSectionView: View {
         .padding(.top, 2)
     }
 
-    // MARK: - Text helpers (same logic)
-
-    private func alertTitle(_ alert: CoinPriceAlert) -> String {
-        switch alert.type {
-        case .above:
-            return "Price above \(CurrencyFormatter.usd(alert.targetPrice))"
-        case .below:
-            return "Price below \(CurrencyFormatter.usd(alert.targetPrice))"
-        case .percentage:
-            return
-                "Change ±\(PercentFormatter.twoDecimals(alert.targetPrice))"
-        }
-    }
-
-    private func alertSubtitle(_ alert: CoinPriceAlert) -> String {
-        var parts: [String] = []
-        parts.append(
-            "Created "
-                + alert.createdAt.formatted(
-                    date: .abbreviated,
-                    time: .shortened
-                )
-        )
-        if alert.isEnabled == false {
-            parts.append("Disabled")
-        }
-        return parts.joined(separator: " • ")
-    }
 }

@@ -18,29 +18,3 @@ extension String {
         return Double(cleaned) ?? 0.0
     }
 }
-
-func title(for alert: CoinPriceAlert) -> String {
-    switch alert.type {
-    case .above:
-        return "Price above \(CurrencyFormatter.usd(alert.targetPrice))"
-    case .below:
-        return "Price below \(CurrencyFormatter.usd(alert.targetPrice))"
-    case .percentage:
-        return "Change ±\(PercentFormatter.twoDecimals(alert.targetPrice))"
-    }
-}
-
-func subtitle(for alert: CoinPriceAlert) -> String {
-    var parts: [String] = []
-    parts.append(
-        "Created "
-            + alert.createdAt.formatted(
-                date: .abbreviated,
-                time: .shortened
-            )
-    )
-    if alert.isEnabled == false {
-        parts.append("Disabled")
-    }
-    return parts.joined(separator: " • ")
-}

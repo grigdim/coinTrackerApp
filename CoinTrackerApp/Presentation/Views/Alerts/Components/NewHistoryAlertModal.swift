@@ -131,7 +131,8 @@ struct NewHistoryAlertModal: View {
                                     )
                                 )
                                 .onChange(of: targetText) { newValue in
-                                    validateTarget(newValue)
+                                    targetError = AlertTargetInputParser
+                                        .validationError(for: newValue)
                                 }
                             }
 
@@ -191,7 +192,8 @@ struct NewHistoryAlertModal: View {
                                     )
                                 )
                                 .onChange(of: targetText) { newValue in
-                                    validateTarget(newValue)
+                                    targetError = AlertTargetInputParser
+                                        .validationError(for: newValue)
                                 }
                             }
 
@@ -318,78 +320,9 @@ struct NewHistoryAlertModal: View {
         .presentationDragIndicator(.visible)
     }
 
-    // function for enforcing numbers only in text input
-    private func validateTarget(_ s: String) {
-        // Allow empty while drafting
-        guard !s.isEmpty else {
-            targetError = nil
-            return
-        }
-
-        // Locale-aware decimal separator
-        let decimal = Locale.current.decimalSeparator ?? "."
-
-        var seenDecimal = false
-        for ch in s {
-            if ch.isNumber { continue }
-            if String(ch) == decimal, !seenDecimal {
-                seenDecimal = true
-                continue
-            }
-            // Any other character is invalid
-            targetError =
-                "Only numbers\(decimal == "." ? " and a single dot" : " and a single decimal separator") are allowed."
-            return
-        }
-
-        // Valid
-        targetError = nil
-    }
-
-    private func parseTarget() -> Double? {
-        // Start from the actual input string
-        var s = targetText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !s.isEmpty else { return nil }
-
-        // Remove common currency symbols and spaces
-        let unwantedChars = CharacterSet(charactersIn: "$€£¥  ")  // includes normal and non-breaking space
-        s = s.components(separatedBy: unwantedChars).joined()
-
-        // Remove grouping separators (e.g., ",", ".", depending on locale)
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.locale = Locale.current
-
-        if let grouping = formatter.groupingSeparator, !grouping.isEmpty {
-            s = s.replacingOccurrences(of: grouping, with: "")
-        }
-
-        // Normalize decimal separator to "."
-        let decimal = formatter.decimalSeparator ?? "."
-        if decimal != "." {
-            s = s.replacingOccurrences(of: decimal, with: ".")
-        }
-
-        // Allow only digits and a single dot (in case user pasted odd chars)
-        var cleaned = ""
-        var seenDot = false
-        for ch in s {
-            if ch.isNumber {
-                cleaned.append(ch)
-            } else if ch == ".", !seenDot {
-                cleaned.append(ch)
-                seenDot = true
-            }
-            // ignore everything else
-        }
-
-        guard !cleaned.isEmpty else { return nil }
-        return Double(cleaned)
-    }
-
     private func addNewAlert() {
         guard targetError == nil else { return }
-        guard let value = parseTarget() else {
+        guard let value = AlertTargetInputParser.parse(targetText) else {
             targetError = "Enter a valid number"
             return
         }

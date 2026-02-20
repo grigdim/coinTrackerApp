@@ -44,7 +44,7 @@ struct CoinAlertsHistoryView: View {
 
                         VStack(alignment: .leading, spacing: 2) {
 
-                            Text(title(for: alert))
+                            Text(alertTitle(for: alert))
 
                                 .font(.footnote)
 
