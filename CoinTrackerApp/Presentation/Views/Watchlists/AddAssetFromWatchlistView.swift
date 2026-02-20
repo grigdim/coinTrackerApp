@@ -12,7 +12,7 @@ struct AddAssetFromWatchlistView: View {
     
     @EnvironmentObject var viewModel: PortfolioViewModel
     
-    let coin: CoinDetails
+    let coin: MarketRow
     
     // Input States
     @State private var priceString: String = ""
@@ -64,13 +64,11 @@ struct AddAssetFromWatchlistView: View {
             
             // MARK: - Pre-fill Price
             .onAppear {
-                // Remove '$' and ',' so it becomes "95430.00" (valid for Double)
-                let cleanPrice = coin.price
-                    .replacingOccurrences(of: "$", with: "")
-                    .replacingOccurrences(of: ",", with: "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                priceString = cleanPrice
+                if let parsed = MoneyStringFormatter.parseMoneyToDouble(coin.price) {
+                    priceString = String(parsed)
+                } else if coin.currentPriceRaw > 0 {
+                    priceString = String(coin.currentPriceRaw)
+                }
             }
             
             // MARK: - Toolbar Actions
@@ -100,6 +98,7 @@ struct AddAssetFromWatchlistView: View {
         let coinRoute = CoinDetailsRoute(
             id: coin.id,
             name: coin.name,
+            symbol: coin.symbol,
             iconURL: coin.iconURL
         )
         

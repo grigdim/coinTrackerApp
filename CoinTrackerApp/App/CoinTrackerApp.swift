@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct CoinTrackerApp: App {
     @StateObject private var stores = AppStores()
-    @StateObject private var env = AppEnvironment(alertStore: AlertStore())
+    @StateObject private var alertStore = AlertStore()
     @StateObject private var portfolioViewModel: PortfolioViewModel
         
     init() {
@@ -16,13 +16,13 @@ struct CoinTrackerApp: App {
         WindowGroup {
             RootTabView()
                 .environmentObject(stores)
-                .environmentObject(env.alertStore)
+                .environmentObject(alertStore)
                 .environmentObject(portfolioViewModel)
                 .task {
                     await stores.categories.loadIfNeeded()
                 }
                 .task {
-                    NotificationManager.shared.alertStore = env.alertStore
+                    NotificationManager.shared.alertStore = alertStore
                     await NotificationManager.shared.requestAuthorization()
                 }
         }

@@ -135,6 +135,7 @@ struct SearchView: View {
                     value: CoinDetailsRoute(
                         id: row.id,
                         name: row.name,
+                        symbol: row.symbol,
                         iconURL: row.iconURL
                     )
                 ) {
@@ -195,6 +196,7 @@ struct SearchView: View {
                         value: CoinDetailsRoute(
                             id: row.id,
                             name: row.name,
+                            symbol: row.symbol,
                             iconURL: row.iconURL
                         )
                     ) {

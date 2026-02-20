@@ -32,19 +32,6 @@ struct AlertsSectionView: View {
 
             addButton
         }
-        .onAppear {
-            let alerts = alertStore.alerts(coinId: coinId)
-            print(
-                "AlertsSectionView alertStore:",
-                ObjectIdentifier(alertStore).hashValue,
-                "active:",
-                alertStore.active.count,
-                "filtered:",
-                alerts.count,
-                "coinId:",
-                coinId
-            )
-        }
         .sheet(isPresented: $showingCreateAlert) {
             NewAlertModal(
                 coinId: coinId,

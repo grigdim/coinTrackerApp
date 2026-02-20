@@ -52,6 +52,7 @@ struct MarketsListView: View {
                 value: CoinDetailsRoute(
                     id: row.id,
                     name: row.name,
+                    symbol: row.symbol,
                     iconURL: row.iconURL
                 )
             ) {

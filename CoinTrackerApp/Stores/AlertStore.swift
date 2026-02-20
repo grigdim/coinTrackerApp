@@ -37,9 +37,7 @@ import SwiftUI
         do {
             let payload = Persisted(active: active, history: history)
             try CodablePersistence.saveToFile(payload, at: fileURL)
-        } catch {
-            print("Failed to save alerts: \(error)")
-        }
+        } catch {}
         // Saving alone doesn't change state; no bump here.
     }
 

@@ -82,7 +82,6 @@ class PortfolioViewModel: ObservableObject {
             portfolioState = .loaded(())
             
         } catch {
-            print("Portfolio refresh failed: \(error)")
             // Keep showing old data on failure, but mark state as failed
             portfolioState = .failed(error)
         }
@@ -116,18 +115,39 @@ class PortfolioViewModel: ObservableObject {
             searchState = .loaded(())
             
         } catch {
-            print("Failed to fetch fresh coin list: \(error)")
             if availableCoins.isEmpty {
                 searchState = .failed(error)
             }
         }
     }
+
+    func fetchRowsForCoinIDs(_ ids: [String]) async throws -> [MarketRow] {
+        let uniqueIDs = ids.orderedUniqueElements()
+        guard !uniqueIDs.isEmpty else { return [] }
+
+        let batchSize = 250
+        var allRows: [MarketRow] = []
+        var index = 0
+
+        while index < uniqueIDs.count {
+            let end = min(index + batchSize, uniqueIDs.count)
+            let batch = Array(uniqueIDs[index..<end])
+            let rows = try await repository.fetchMarketRows(
+                category: "",
+                perPage: batch.count,
+                page: 1,
+                ids: batch
+            )
+            allRows.append(contentsOf: rows)
+            index = end
+        }
+
+        return allRows
+    }
     
     // MARK: - Actions (CRUD)
     
     func addTransaction(coin: CoinDetailsRoute, price: Double, quantity: Double) {
-        print("Saving Transaction: \(quantity) \(coin.name) @ $\(price)")
-        
         let transaction = PortfolioTransaction(
             id: UUID(),
             date: Date(),
@@ -140,7 +160,7 @@ class PortfolioViewModel: ObservableObject {
         } else {
             let newAsset = PortfolioAsset(
                 id: coin.id,
-                symbol: coin.name,
+                symbol: coin.symbol,
                 lastKnownPrice: price, // Use input price initially
                 transactions: [transaction]
             )
@@ -207,5 +227,16 @@ class PortfolioViewModel: ObservableObject {
         ) {
             self.availableCoins = decoded
         }
+    }
+}
+
+private extension Array where Element: Hashable {
+    func orderedUniqueElements() -> [Element] {
+        var seen: Set<Element> = []
+        var result: [Element] = []
+        for element in self where seen.insert(element).inserted {
+            result.append(element)
+        }
+        return result
     }
 }

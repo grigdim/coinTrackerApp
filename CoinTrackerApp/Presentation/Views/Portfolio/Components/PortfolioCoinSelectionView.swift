@@ -59,7 +59,12 @@ struct PortfolioCoinSelectionView: View {
                     } else {
                         List(viewModel.filteredCoins) { row in
                             Button {
-                                selectedCoin = CoinDetailsRoute(id: row.id, name: row.name, iconURL: row.iconURL)
+                                selectedCoin = CoinDetailsRoute(
+                                    id: row.id,
+                                    name: row.name,
+                                    symbol: row.symbol,
+                                    iconURL: row.iconURL
+                                )
                             } label: {
                                 HStack {
                                     AsyncImage(url: row.iconURL) { img in
@@ -112,4 +117,3 @@ struct PortfolioCoinSelectionView: View {
         }
     }
 }
-

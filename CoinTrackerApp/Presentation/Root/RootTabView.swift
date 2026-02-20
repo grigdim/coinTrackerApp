@@ -79,12 +79,12 @@ struct RootTabView: View {
 
 private struct RootTabPreviewHost: View {
     @StateObject private var stores = AppStores()
-    @StateObject private var env = AppEnvironment(alertStore: AlertStore())
+    @StateObject private var alertStore = AlertStore()
 
     var body: some View {
         RootTabView()
             .environmentObject(stores)
-            .environmentObject(env)
+            .environmentObject(alertStore)
             .task {
                 await stores.categories.loadIfNeeded()
             }

@@ -50,7 +50,7 @@ class WatchlistsViewModel: ObservableObject {
             id: UUID(),
             name: name,
             icon: icon,
-            coins: []
+            coinIDs: []
         )
         watchlists.append(newWatchlist)
     }

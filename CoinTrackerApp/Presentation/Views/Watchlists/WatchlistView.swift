@@ -38,7 +38,7 @@ struct WatchlistView: View {
                             VStack(alignment: .leading) {
                                 Text(watchlist.name)
                                     .font(.headline)
-                                Text("\(watchlist.coins.count) coins")
+                                Text("\(watchlist.coinIDs.count) coins")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }

@@ -28,7 +28,7 @@ struct AddToWatchlistView: View {
                             Spacer()
                             
                             // Check if coin is already in this list
-                            if watchlist.coins.contains(where: { $0.id == coin.id }) {
+                            if watchlist.coinIDs.contains(coin.id) {
                                 Image(systemName: "checkmark").foregroundColor(.secondary)
                             } else {
                                 Image(systemName: "plus").foregroundColor(.blue)
@@ -54,13 +54,12 @@ struct AddToWatchlistView: View {
             var updatedList = viewModel.watchlists[index]
             
             // Avoid duplicates
-            if !updatedList.coins.contains(where: { $0.id == coin.id }) {
-                updatedList.coins.append(coin)
+            if !updatedList.coinIDs.contains(coin.id) {
+                updatedList.coinIDs.append(coin.id)
                 viewModel.watchlists[index] = updatedList // This triggers the save in ViewModel
             }
         }
         dismiss()
     }
 }
-
 

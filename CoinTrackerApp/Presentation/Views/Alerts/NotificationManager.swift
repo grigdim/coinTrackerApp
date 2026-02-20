@@ -29,12 +29,9 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let center = UNUserNotificationCenter.current()
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            if !granted {
-                // You may want to surface this to the user in-app.
-                print("Notifications permission not granted.")
-            }
+            if !granted { return }
         } catch {
-            print("Notifications authorization error: \(error)")
+            return
         }
     }
 
@@ -87,10 +84,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             trigger: nil
         )
         UNUserNotificationCenter.current().add(request) { [weak self] error in
-            if let error = error {
-                print("Failed to schedule price alert: \(error)")
-                return
-            }
+            if error != nil { return }
 
             Task { @MainActor [weak self] in
                 self?.alertStore?.archiveToHistory(
@@ -123,11 +117,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             content: content,
             trigger: trigger
         )
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Failed to schedule snoozed notification: \(error)")
-            }
-        }
+        UNUserNotificationCenter.current().add(request)
     }
 
     // MARK: - Helpers
@@ -145,12 +135,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     private func currencyStringUSD(_ value: Double) -> String {
-        let nf = NumberFormatter()
-        nf.numberStyle = .currency
-        nf.currencyCode = "USD"
-        nf.maximumFractionDigits = 2
-        nf.minimumFractionDigits = 0
-        return nf.string(from: NSNumber(value: value)) ?? "$\(value)"
+        CurrencyFormatter.usd(value)
     }
 }
 

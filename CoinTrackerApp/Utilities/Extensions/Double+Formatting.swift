@@ -21,25 +21,30 @@ enum AbbreviatedNumberFormatter {
     }
 
     private static func formatAbbreviated(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.locale = .current
-        formatter.maximumFractionDigits = value < 10 ? 2 : 1
-        formatter.minimumFractionDigits = 0
-        formatter.numberStyle = .decimal
+        let formatter = NumberFormatterFactory.decimal(
+            minimumFractionDigits: 0,
+            maximumFractionDigits: value < 10 ? 2 : 1
+        )
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 }
 
 enum CurrencyFormatter {
     static func usd(_ value: Double?) -> String {
+        usd(value, minimumFractionDigits: 0, maximumFractionDigits: 2)
+    }
+
+    static func usd(
+        _ value: Double?,
+        minimumFractionDigits: Int,
+        maximumFractionDigits: Int
+    ) -> String {
         guard let value else { return "—" }
 
-        let formatter = NumberFormatter()
-        formatter.locale = .current
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 0
+        let formatter = NumberFormatterFactory.usdCurrency(
+            minimumFractionDigits: minimumFractionDigits,
+            maximumFractionDigits: maximumFractionDigits
+        )
 
         return formatter.string(from: NSNumber(value: value)) ?? "—"
     }
@@ -117,9 +122,7 @@ enum MoneyStringFormatter {
         guard !numberPart.isEmpty else { return nil }
 
         // Try locale-aware parse first (works for values produced by our formatters).
-        let localFormatter = NumberFormatter()
-        localFormatter.numberStyle = .decimal
-        localFormatter.locale = .current
+        let localFormatter = NumberFormatterFactory.decimal()
         if let parsed = localFormatter.number(from: numberPart)?.doubleValue {
             return parsed * multiplier
         }

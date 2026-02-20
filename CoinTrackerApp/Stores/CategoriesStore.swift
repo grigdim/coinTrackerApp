@@ -32,7 +32,7 @@ final class CategoriesStore: ObservableObject {
             categories = try await getCategories.execute()
             hasLoadedOnce = true
         } catch {
-            print("Failed to load categories:", error)
+            return
         }
     }
 }

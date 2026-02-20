@@ -12,6 +12,7 @@ import SwiftUI
 struct CoinDetailsRoute: Hashable, Identifiable {
     let id: String
     let name: String
+    let symbol: String
     let iconURL: URL?
 }
 
@@ -163,7 +164,7 @@ struct CoinDetailsView: View {
                 showAddSheet = true
             } label: {
                 let isSaved = watchlistsViewModel.watchlists.contains { list in
-                    list.coins.contains { $0.id == route.id }
+                    list.coinIDs.contains(route.id)
                 }
 
                 Image(systemName: isSaved ? "heart.fill" : "heart")
@@ -344,6 +345,7 @@ struct CoinDetailsView: View {
             route: .init(
                 id: "bitcoin",
                 name: "Bitcoin",
+                symbol: "BTC",
                 iconURL: URL(
                     string:
                         "https://assets.coingecko.com/coins/images/1/large/bitcoin.png"
@@ -351,5 +353,5 @@ struct CoinDetailsView: View {
             )
         )
     }
-    .environmentObject(AppEnvironment(alertStore: AlertStore()))
+    .environmentObject(AlertStore())
 }

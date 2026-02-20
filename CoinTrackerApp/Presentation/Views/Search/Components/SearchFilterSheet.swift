@@ -109,44 +109,57 @@ struct SearchFiltersSheet: View {
                         value: draft.filters.marketCap.upperBound
                     )
 
+                    let minMarketCap = 1.0
+                    let maxMarketCap = marketCapMax
+
                     Slider(
                         value: Binding(
-                            get: { draft.filters.marketCap.lowerBound },
-                            set: { newLower in
-                                let clampedLower = max(
-                                    0,
-                                    min(newLower, marketCapMax)
+                            get: {
+                                toLogValue(
+                                    draft.filters.marketCap.lowerBound,
+                                    minValue: minMarketCap,
+                                    maxValue: maxMarketCap
+                                )
+                            },
+                            set: { t in
+                                let newLower = fromLogValue(
+                                    t,
+                                    minValue: minMarketCap,
+                                    maxValue: maxMarketCap
                                 )
                                 let newUpper = max(
                                     draft.filters.marketCap.upperBound,
-                                    clampedLower
+                                    newLower
                                 )
-                                draft.filters.marketCap =
-                                    clampedLower...newUpper
+                                draft.filters.marketCap = newLower...newUpper
                             }
                         ),
-                        in: 0...marketCapMax,
-                        step: 1
+                        in: 0...1
                     )
 
                     Slider(
                         value: Binding(
-                            get: { draft.filters.marketCap.upperBound },
-                            set: { newUpper in
-                                let clampedUpper = max(
-                                    0,
-                                    min(newUpper, marketCapMax)
+                            get: {
+                                toLogValue(
+                                    draft.filters.marketCap.upperBound,
+                                    minValue: minMarketCap,
+                                    maxValue: maxMarketCap
+                                )
+                            },
+                            set: { t in
+                                let newUpper = fromLogValue(
+                                    t,
+                                    minValue: minMarketCap,
+                                    maxValue: maxMarketCap
                                 )
                                 let newLower = min(
                                     draft.filters.marketCap.lowerBound,
-                                    clampedUpper
+                                    newUpper
                                 )
-                                draft.filters.marketCap =
-                                    newLower...clampedUpper
+                                draft.filters.marketCap = newLower...newUpper
                             }
                         ),
-                        in: 0...marketCapMax,
-                        step: 1
+                        in: 0...1
                     )
                 }
 
@@ -160,42 +173,57 @@ struct SearchFiltersSheet: View {
                         value: draft.filters.volume.upperBound
                     )
 
+                    let minVolume = 1.0
+                    let maxVolume = volumeMax
+
                     Slider(
                         value: Binding(
-                            get: { draft.filters.volume.lowerBound },
-                            set: { newLower in
-                                let clampedLower = max(
-                                    0,
-                                    min(newLower, volumeMax)
+                            get: {
+                                toLogValue(
+                                    draft.filters.volume.lowerBound,
+                                    minValue: minVolume,
+                                    maxValue: maxVolume
+                                )
+                            },
+                            set: { t in
+                                let newLower = fromLogValue(
+                                    t,
+                                    minValue: minVolume,
+                                    maxValue: maxVolume
                                 )
                                 let newUpper = max(
                                     draft.filters.volume.upperBound,
-                                    clampedLower
+                                    newLower
                                 )
-                                draft.filters.volume = clampedLower...newUpper
+                                draft.filters.volume = newLower...newUpper
                             }
                         ),
-                        in: 0...volumeMax,
-                        step: 1
+                        in: 0...1
                     )
 
                     Slider(
                         value: Binding(
-                            get: { draft.filters.volume.upperBound },
-                            set: { newUpper in
-                                let clampedUpper = max(
-                                    0,
-                                    min(newUpper, volumeMax)
+                            get: {
+                                toLogValue(
+                                    draft.filters.volume.upperBound,
+                                    minValue: minVolume,
+                                    maxValue: maxVolume
+                                )
+                            },
+                            set: { t in
+                                let newUpper = fromLogValue(
+                                    t,
+                                    minValue: minVolume,
+                                    maxValue: maxVolume
                                 )
                                 let newLower = min(
                                     draft.filters.volume.lowerBound,
-                                    clampedUpper
+                                    newUpper
                                 )
-                                draft.filters.volume = newLower...clampedUpper
+                                draft.filters.volume = newLower...newUpper
                             }
                         ),
-                        in: 0...volumeMax,
-                        step: 1
+                        in: 0...1
                     )
                 }
 
@@ -263,21 +291,20 @@ struct SearchFiltersSheet: View {
     }
 
     private func formatUSDAdaptive(_ value: Double) -> String {
-        let nf = NumberFormatter()
-        nf.numberStyle = .currency
-        nf.currencyCode = "USD"
-        nf.minimumFractionDigits = 0
-
+        let maxFractionDigits: Int
         switch value {
         case 0..<0.01:
-            nf.maximumFractionDigits = 6
+            maxFractionDigits = 6
         case 0.01..<1:
-            nf.maximumFractionDigits = 4
+            maxFractionDigits = 4
         default:
-            nf.maximumFractionDigits = 2
+            maxFractionDigits = 2
         }
-
-        return nf.string(from: NSNumber(value: value)) ?? "—"
+        return CurrencyFormatter.usd(
+            value,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maxFractionDigits
+        )
     }
 }
 
