@@ -70,11 +70,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         alert: CoinPriceAlert,
         latestPrice: Double
     ) {
-        // Move alert to history as unread when it triggers
-        Task { @MainActor [weak self] in
-            self?.alertStore?.archiveToHistory(alertId: alert.id, triggeredAt: Date(), markUnread: true)
-        }
-
         let content = UNMutableNotificationContent()
         content.title = "Price Alert"
         content.body = notificationBody(for: alert, latestPrice: latestPrice)
@@ -91,9 +86,18 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             content: content,
             trigger: nil
         )
-        UNUserNotificationCenter.current().add(request) { error in
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
             if let error = error {
                 print("Failed to schedule price alert: \(error)")
+                return
+            }
+
+            Task { @MainActor [weak self] in
+                self?.alertStore?.archiveToHistory(
+                    alertId: alert.id,
+                    triggeredAt: Date(),
+                    markUnread: true
+                )
             }
         }
     }

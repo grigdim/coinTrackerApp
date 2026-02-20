@@ -55,8 +55,7 @@ struct CoinDetails: Identifiable, Hashable, Codable {
             ath: ath,
             atl: atl,
             change24h: change24h,
-            change24hRaw: MoneyStringFormatter.parseMoneyToDouble(change24h)
-                ?? 0.0,
+            change24hRaw: PercentFormatter.parse(change24h) ?? 0.0,
             isUp: isUp,
             sparkline: sparkline,
             currentPriceRaw: 0.0

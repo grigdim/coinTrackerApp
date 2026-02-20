@@ -75,6 +75,7 @@ struct CoinAlertsDetailView: View {
         .navigationTitle("Alerts")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+#if DEBUG
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     seedExampleAlert()
@@ -82,6 +83,7 @@ struct CoinAlertsDetailView: View {
                     Label("Seed", systemImage: "bolt.fill")
                 }
             }
+#endif
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
                     CoinAlertsHistoryView(coinId: coinId)
@@ -92,6 +94,7 @@ struct CoinAlertsDetailView: View {
         }
     }
 
+#if DEBUG
     private func seedExampleAlert() {
         let sample = CoinPriceAlert(
             id: UUID(),
@@ -105,4 +108,5 @@ struct CoinAlertsDetailView: View {
         )
         alertStore.add(sample)
     }
+#endif
 }

@@ -34,12 +34,15 @@ enum CoinGeckoEndpoint {
         case .markets(let category, let perPage, let page, let ids):
             var query: [URLQueryItem] = [
                 URLQueryItem(name: "vs_currency", value: "usd"),
-                URLQueryItem(name: "category", value: "\(category)"),
                 URLQueryItem(name: "per_page", value: "\(perPage)"),
                 URLQueryItem(name: "page", value: "\(page)"),
                 URLQueryItem(name: "sparkline", value: "true"),
                 URLQueryItem(name: "price_change_percentage", value: "24h"),
             ]
+
+            if !category.isEmpty {
+                query.append(URLQueryItem(name: "category", value: category))
+            }
 
             if let ids = ids, !ids.isEmpty {
                 let idsString = ids.joined(separator: ",")
