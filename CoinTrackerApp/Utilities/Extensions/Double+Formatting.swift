@@ -56,6 +56,17 @@ enum PercentFormatter {
         guard let value else { return "—" }
         return String(format: "%.2f%%", locale: .current, value)
     }
+
+    static func parse(_ value: String?) -> Double? {
+        guard let value else { return nil }
+        let cleaned =
+            value
+            .replacingOccurrences(of: "%", with: "")
+            .replacingOccurrences(of: "+", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return Double(cleaned)
+    }
 }
 
 enum NumberFormatterUtil {

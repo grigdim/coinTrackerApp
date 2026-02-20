@@ -18,6 +18,7 @@ struct Constants {
     static let ADD_ALERT = "Add alert"
     
     static let NEW_PRICE_ALERT = "New Price Alert"
+    static let NEW_COIN = "Coin"
     static let CONFIGURATION_OF_NOTIFICATION = "Configure how you want to be notified when the price moves."
     static let NOTIFICATION_TARGET = "Target"
     static let NOTIFICATION_BLANK = "--"

@@ -54,11 +54,9 @@ class PortfolioViewModel: ObservableObject {
         let userCoinIds = assets.map { $0.id }
         
         do {
-            // FIX: Set category to nil.
-            // If we filter by ".top100", coins like USDT or smaller tokens might be excluded
-            // and their price will look stuck.
+            // Fetch by ids only. Keep category empty so endpoint omits it.
             let marketRows = try await repository.fetchMarketRows(
-                category: "layer-1",
+                category: "",
                 perPage: 250,
                 page: 1,
                 ids: userCoinIds

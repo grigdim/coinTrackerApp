@@ -92,12 +92,12 @@ final class APIClient: APIClientProtocol {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue(
-            "CG-sYXh9e6nUC5jKE7Ck88EsTF2",
-            forHTTPHeaderField: "x-cg-demo-api-key"
-        )
-
-        // If you add CoinGecko API key later, you'd add headers here.
+        if let apiKey = BuildConfig.coinGeckoAPIKey {
+            request.setValue(
+                apiKey,
+                forHTTPHeaderField: "x-cg-demo-api-key"
+            )
+        }
 
         let (data, response) = try await session.data(for: request)
 

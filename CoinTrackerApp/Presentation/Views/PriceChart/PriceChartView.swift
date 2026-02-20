@@ -7,19 +7,15 @@ struct PriceChartView: View {
     @State private var selectedChartRange: ChartRange = .day
     @StateObject private var viewModel: PriceChartViewModel
 
-    // Scrub selection
     @State private var selectedPoint: CoinChartPoint?
 
-    // Zoom state (X only)
     @State private var visibleXDomain: ClosedRange<Date>?
     @State private var lastMagnification: CGFloat = 1.0
 
-    // Design constants (UI only)
     private let cardCornerRadius: CGFloat = 16
     private let cardFill = Color.gray.opacity(0.08)
     private let cardStroke = Color.gray.opacity(0.18)
 
-    // Formatter (UI only; avoid recreating every scrub frame)
     private static let priceFormatter: NumberFormatter = {
         let nf = NumberFormatter()
         nf.numberStyle = .currency

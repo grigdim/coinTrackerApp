@@ -46,8 +46,7 @@ struct MarketsListView: View {
                 || $0.name.localizedCaseInsensitiveContains(searchText)
         }
 
-        ForEach(filtered.indices, id: \.self) { index in
-            let row = filtered[index]
+        ForEach(Array(filtered.enumerated()), id: \.element.id) { index, row in
 
             NavigationLink(
                 value: CoinDetailsRoute(
@@ -64,7 +63,7 @@ struct MarketsListView: View {
             .listRowInsets(
                 EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
             )
-            .contentShape(Rectangle())  // nicer tap target feel
+            .contentShape(Rectangle())
         }
     }
 }

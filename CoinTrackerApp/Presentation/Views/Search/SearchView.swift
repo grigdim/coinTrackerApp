@@ -171,6 +171,7 @@ struct SearchView: View {
         }
         .listStyle(.plain)
         .searchable(text: $searchText, prompt: "Search markets")
+        .submitLabel(.search)
         .refreshable {
             await viewModel.refreshMarketRows(for: selectedCategoryId)
         }

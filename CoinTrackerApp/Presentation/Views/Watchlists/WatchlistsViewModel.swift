@@ -30,9 +30,8 @@ class WatchlistsViewModel: ObservableObject {
                 return
             }
         }
-        // 4. If no saved data exists (First launch), load mocks
-        //TODO REMOVE 
-        self.watchlists = Watchlist.mocks()
+        // 4. If no saved data exists (first launch), start empty
+        self.watchlists = []
     }
     
     // 5. Save Helper
